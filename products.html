@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Katalog Produk — Keyrakha Souvenir</title>
+  <meta name="description" content="Jelajahi katalog souvenir dan merchandise custom Keyrakha untuk corporate, wedding, seminar, dan berbagai acara.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html" aria-label="Keyrakha Souvenir">
+        <span class="brand-mark">K</span>
+        <span class="brand-copy"><strong>KEYRAKHA</strong><small>SOUVENIR</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Navigasi utama">
+        <a href="index.html">Beranda</a>
+        <a class="active" href="products.html">Produk</a>
+        <a href="about.html">Tentang Kami</a>
+        <a href="contact.html">Kontak</a>
+      </nav>
+      <a class="nav-cta" data-wa-link data-wa-message="Halo Keyrakha Souvenir, saya ingin konsultasi souvenir." href="#" target="_blank" rel="noopener">Konsultasi</a>
+      <button class="menu-toggle" type="button" aria-label="Buka menu" aria-expanded="false"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <main>
+    <section class="catalog-hero">
+      <div class="container catalog-hero-grid">
+        <div>
+          <span class="eyebrow">KATALOG KEYRAKHA</span>
+          <h1>Temukan souvenir yang <em>pas</em> untuk momen Anda.</h1>
+        </div>
+        <p>Jelajahi pilihan souvenir, merchandise, dan gift set custom. Gunakan pencarian atau kategori untuk menemukan produk yang sesuai kebutuhan acara.</p>
+      </div>
+    </section>
+
+    <section class="catalog-section">
+      <div class="container">
+        <div class="catalog-toolbar">
+          <label class="catalog-search" for="productSearch">
+            <span>⌕</span>
+            <input id="productSearch" type="search" placeholder="Cari produk, misalnya tumbler atau gift set..." autocomplete="off">
+          </label>
+          <div class="catalog-sort-wrap">
+            <label for="productSort">Urutkan</label>
+            <select id="productSort">
+              <option value="featured">Pilihan Utama</option>
+              <option value="newest">Terbaru</option>
+              <option value="bestseller">Best Seller</option>
+              <option value="promo">Sedang Promo</option>
+              <option value="price-asc">Harga Terendah</option>
+              <option value="price-desc">Harga Tertinggi</option>
+              <option value="name">Nama A-Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-chips" aria-label="Filter kategori produk">
+          <button class="filter-chip active" type="button" data-category="all">Semua</button>
+          <button class="filter-chip" type="button" data-category="tumbler">Tumbler</button>
+          <button class="filter-chip" type="button" data-category="mug">Mug</button>
+          <button class="filter-chip" type="button" data-category="tas">Tas & Pouch</button>
+          <button class="filter-chip" type="button" data-category="gift-set">Gift Set</button>
+          <button class="filter-chip" type="button" data-category="atk">ATK</button>
+          <button class="filter-chip" type="button" data-category="lainnya">Lainnya</button>
+        </div>
+
+        <div class="catalog-meta">
+          <p><strong id="productCount">0</strong> produk ditemukan</p>
+          <p class="catalog-hint">Harga ditampilkan sebagai harga awal dan dapat menyesuaikan jumlah serta spesifikasi custom.</p>
+          <span id="catalogStatus" class="catalog-status" aria-live="polite"></span>
+        </div>
+
+        <div id="catalogGrid" class="product-grid catalog-grid" aria-live="polite"></div>
+
+        <div id="catalogEmpty" class="catalog-empty" hidden>
+          <span>✦</span>
+          <h2>Produk belum ditemukan.</h2>
+          <p>Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
+          <button id="resetCatalog" class="btn btn-primary" type="button">Tampilkan Semua Produk</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="catalog-help">
+      <div class="container catalog-help-card">
+        <div>
+          <span class="eyebrow">BELUM MENEMUKAN YANG COCOK?</span>
+          <h2>Ceritakan kebutuhan Anda.</h2>
+          <p>Kami bisa bantu mencarikan pilihan souvenir berdasarkan jenis acara, budget, jumlah, dan kebutuhan custom.</p>
+        </div>
+        <a class="btn btn-light" data-wa-link data-wa-message="Halo Keyrakha Souvenir, saya ingin dibantu mencari souvenir yang sesuai." href="#" target="_blank" rel="noopener">Konsultasi via WhatsApp <span>↗</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand inverse" href="index.html"><span class="brand-mark">K</span><span class="brand-copy"><strong>KEYRAKHA</strong><small>SOUVENIR</small></span></a>
+        <p>Souvenir dan merchandise custom untuk setiap momen yang ingin dikenang.</p>
+      </div>
+      <div><h4>Navigasi</h4><a href="index.html">Beranda</a><a href="products.html">Produk</a><a href="about.html">Tentang Kami</a><a href="contact.html">Kontak</a></div>
+      <div><h4>Kontak</h4><a data-wa-link data-wa-number href="#" target="_blank" rel="noopener">0856-1239-555</a><a href="#">Instagram</a><a href="contact.html">Tangerang Selatan</a></div>
+    </div>
+    <div class="container footer-bottom"><span>© 2026 Keyrakha Souvenir</span><span>Made for meaningful moments.</span></div>
+  </footer>
+
+  <a class="whatsapp-float" data-wa-link data-wa-message="Halo Keyrakha Souvenir, saya ingin bertanya mengenai produk souvenir." href="#" target="_blank" rel="noopener" aria-label="Hubungi Keyrakha Souvenir melalui WhatsApp">
+    <span class="wa-icon">✆</span><span>Hubungi Kami</span>
+  </a>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

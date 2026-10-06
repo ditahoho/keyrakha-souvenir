@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard — Keyrakha Souvenir</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a class="brand" href="../index.html">
+      <span class="brand-mark">K</span>
+      <span class="brand-copy"><strong>KEYRAKHA</strong><small>ADMIN</small></span>
+    </a>
+    <nav id="adminNav">
+      <a class="active" href="#dashboard">Dashboard</a>
+      <a href="#products">Produk</a>
+      <a href="#categories">Kategori</a>
+      <a href="#settings">Pengaturan Website</a>
+      <a href="../index.html" target="_blank">Lihat Website ↗</a>
+    </nav>
+    <button id="logoutButton" class="admin-logout">Keluar</button>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div><span class="eyebrow">KEYRAKHA ADMIN</span><h1>Dashboard</h1></div>
+      <div class="admin-user"><span id="adminEmail">Admin</span><span class="admin-user-dot"></span></div>
+    </header>
+
+    <section id="dashboard" class="admin-stats admin-scroll-section">
+      <article><span>Total Produk</span><strong id="statTotal">—</strong></article>
+      <article><span>Produk Aktif</span><strong id="statActive">—</strong></article>
+      <article><span>Produk Pilihan</span><strong id="statFeatured">—</strong></article>
+      <article><span>Kategori</span><strong id="statCategories">—</strong></article>
+    </section>
+
+    <section id="products" class="admin-panel admin-scroll-section">
+      <div class="admin-panel-heading">
+        <div><span class="eyebrow">KATALOG</span><h2>Kelola Produk</h2><p>Produk aktif akan otomatis tampil di website.</p></div>
+        <button id="addProductButton" class="btn btn-primary">+ Tambah Produk</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Produk</th><th>Kategori</th><th>Harga</th><th>Status</th><th>Label</th><th>Aksi</th></tr></thead>
+          <tbody id="productRows"><tr><td colspan="6">Memuat produk...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="categories" class="admin-panel admin-scroll-section">
+      <div class="admin-panel-heading">
+        <div><span class="eyebrow">KATEGORI</span><h2>Kelola Kategori</h2><p>Kategori akan otomatis menjadi filter di halaman katalog.</p></div>
+        <button id="addCategoryButton" class="btn btn-primary">+ Tambah Kategori</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-category-table">
+          <thead><tr><th>Nama Kategori</th><th>Slug</th><th>Jumlah Produk</th><th>Aksi</th></tr></thead>
+          <tbody id="categoryRows"><tr><td colspan="4">Memuat kategori...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="settings" class="admin-panel admin-scroll-section">
+      <div class="admin-panel-heading admin-settings-heading">
+        <div><span class="eyebrow">CMS MINI</span><h2>Pengaturan Website</h2><p>Ubah kontak, media sosial, hero, dan informasi bisnis tanpa menyentuh kode.</p></div>
+        <span class="admin-save-hint">Perubahan berlaku ke website setelah disimpan.</span>
+      </div>
+      <form id="settingsForm" class="admin-settings-form">
+        <div class="admin-settings-group">
+          <div class="admin-settings-group-title"><span>01</span><div><h3>Identitas & Hero</h3><p>Informasi utama yang muncul di halaman depan.</p></div></div>
+          <div class="admin-form-grid">
+            <label class="full">Nama Bisnis<input id="settingBusinessName" placeholder="Keyrakha Souvenir"></label>
+            <label class="full">Judul Hero<input id="settingHeroTitle" placeholder="Hadiah kecil, kesan yang tinggal."></label>
+            <label class="full">Deskripsi Hero<textarea id="settingHeroDescription" rows="3" placeholder="Deskripsi singkat homepage..."></textarea></label>
+            <label class="full">Tentang Kami<textarea id="settingAbout" rows="5" placeholder="Ceritakan tentang Keyrakha Souvenir..."></textarea></label>
+          </div>
+        </div>
+
+        <div class="admin-settings-group">
+          <div class="admin-settings-group-title"><span>02</span><div><h3>Kontak & Lokasi</h3><p>Digunakan oleh tombol WhatsApp, halaman kontak, dan footer.</p></div></div>
+          <div class="admin-form-grid">
+            <label>Nomor WhatsApp<input id="settingWhatsapp" inputmode="tel" placeholder="628561239555"><small>Gunakan format 62, contoh 628561239555.</small></label>
+            <label>Email<input id="settingEmail" type="email" placeholder="halo@keyrakha.com"></label>
+            <label class="full">Pesan WhatsApp Default<textarea id="settingWhatsappMessage" rows="3" placeholder="Halo Keyrakha Souvenir, saya ingin bertanya..."></textarea></label>
+            <label class="full">Alamat<textarea id="settingAddress" rows="3" placeholder="Alamat lengkap..."></textarea></label>
+          </div>
+        </div>
+
+        <div class="admin-settings-group">
+          <div class="admin-settings-group-title"><span>03</span><div><h3>Media Sosial</h3><p>Kosongkan yang belum digunakan; link tersebut otomatis disembunyikan.</p></div></div>
+          <div class="admin-form-grid">
+            <label>Instagram<input id="settingInstagram" placeholder="@keyrakha atau URL lengkap"></label>
+            <label>TikTok<input id="settingTiktok" placeholder="@keyrakha atau URL lengkap"></label>
+            <label>Facebook<input id="settingFacebook" placeholder="Nama halaman atau URL lengkap"></label>
+          </div>
+        </div>
+
+        <p id="settingsMessage" class="admin-message" aria-live="polite"></p>
+        <div class="admin-settings-actions"><button type="submit" class="btn btn-primary" id="saveSettings">Simpan Pengaturan</button></div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<dialog id="productDialog" class="admin-dialog">
+  <form id="productForm" class="admin-product-form">
+    <div class="admin-dialog-head"><div><span class="eyebrow">PRODUK</span><h2 id="formTitle">Tambah Produk</h2></div><button type="button" id="closeDialog" class="icon-button" aria-label="Tutup">×</button></div>
+    <input type="hidden" id="productId"><input type="hidden" id="existingImageUrl">
+    <div class="admin-form-grid">
+      <label class="full">Nama Produk<input id="productName" required placeholder="Contoh: Tumbler Stainless Custom"></label>
+      <label>Kategori<select id="productCategory" required></select></label>
+      <label>Harga Mulai (Rp)<input id="productPrice" type="number" min="0" step="1000" required placeholder="35000"></label>
+      <label>Minimum Order<input id="productMinimum" type="number" min="1" value="1" required></label>
+      <label>Foto Produk<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP. Maks. 5 MB.</small></label>
+      <label class="full">Deskripsi<textarea id="productDescription" rows="5" placeholder="Jelaskan bahan, ukuran, kegunaan, dan opsi custom..."></textarea></label>
+      <div class="admin-product-flags full">
+        <span class="admin-field-title">Status & Label Produk</span>
+        <div class="admin-flag-grid">
+          <label class="admin-check"><input id="productActive" type="checkbox" checked><span>Produk aktif</span></label>
+          <label class="admin-check"><input id="productFeatured" type="checkbox"><span>Produk Pilihan</span></label>
+          <label class="admin-check"><input id="productBestSeller" type="checkbox"><span>Best Seller</span></label>
+          <label class="admin-check"><input id="productNew" type="checkbox"><span>Produk Baru</span></label>
+          <label class="admin-check"><input id="productPromo" type="checkbox"><span>Sedang Promo</span></label>
+        </div>
+      </div>
+      <div id="promoFields" class="admin-promo-fields full" hidden>
+        <div class="admin-form-grid">
+          <label>Harga Promo (Rp)<input id="productPromoPrice" type="number" min="0" step="1000" placeholder="129000"></label>
+          <label>Mulai Promo<input id="productPromoStart" type="date"></label>
+          <label>Berakhir Promo<input id="productPromoEnd" type="date"></label>
+        </div>
+        <small>Jika tanggal dikosongkan, promo dianggap aktif selama status “Sedang Promo” dicentang.</small>
+      </div>
+    </div>
+    <div id="imagePreviewWrap" class="admin-image-preview" hidden><img id="imagePreview" alt="Preview foto produk"></div>
+    <p id="formMessage" class="admin-message" aria-live="polite"></p>
+    <div class="admin-form-actions"><button type="button" class="btn btn-ghost" id="cancelProduct">Batal</button><button type="submit" class="btn btn-primary" id="saveProduct">Simpan Produk</button></div>
+  </form>
+</dialog>
+
+<dialog id="categoryDialog" class="admin-dialog admin-dialog-small">
+  <form id="categoryForm" class="admin-product-form">
+    <div class="admin-dialog-head"><div><span class="eyebrow">KATEGORI</span><h2 id="categoryFormTitle">Tambah Kategori</h2></div><button type="button" id="closeCategoryDialog" class="icon-button" aria-label="Tutup">×</button></div>
+    <input type="hidden" id="categoryId">
+    <div class="admin-form-grid one-column">
+      <label>Nama Kategori<input id="categoryName" required placeholder="Contoh: Tumbler"></label>
+      <label>Slug<input id="categorySlug" required placeholder="tumbler"><small>Otomatis dibuat dari nama, tetapi dapat diedit.</small></label>
+    </div>
+    <p id="categoryMessage" class="admin-message" aria-live="polite"></p>
+    <div class="admin-form-actions"><button type="button" class="btn btn-ghost" id="cancelCategory">Batal</button><button type="submit" class="btn btn-primary" id="saveCategory">Simpan Kategori</button></div>
+  </form>
+</dialog>
+
+<div id="toastHost" class="admin-toast-host" aria-live="polite" aria-atomic="true"></div>
+
+<dialog id="confirmDialog" class="admin-confirm-dialog">
+  <div class="admin-confirm-card">
+    <span class="eyebrow">KONFIRMASI</span>
+    <h3 id="confirmTitle">Konfirmasi</h3>
+    <p id="confirmMessage"></p>
+    <div class="admin-form-actions">
+      <button type="button" class="btn btn-ghost" id="confirmNo">Batal</button>
+      <button type="button" class="btn btn-primary" id="confirmYes">Lanjutkan</button>
+    </div>
+  </div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase-config.js"></script>
+<script src="admin.js"></script>
+</body></html>

@@ -226,8 +226,10 @@ function productBadges(product) {
 
 function productCard(product) {
   const meta = productMeta(product);
-  const image = product.image_url
-    ? `<img class="real-product-image" src="${product.image_url}" alt="${escapeHtml(product.name)}" loading="lazy">`
+  const gallery = Array.isArray(product.gallery_urls) ? product.gallery_urls.filter(Boolean) : [];
+  const photos = [product.image_url, ...gallery].filter(Boolean);
+  const image = photos.length
+    ? photos.map((url,index)=>`<img class="real-product-image product-card-photo ${index===0?'is-active':''}" src="${escapeHtml(url)}" alt="${escapeHtml(product.name)}${index?` — foto ${index+1}`:''}" loading="lazy">`).join('')
     : `<div class="mock-product ${meta.art}">${meta.artContent}</div>`;
 
   const promo = isPromoActive(product);
@@ -236,7 +238,7 @@ function productCard(product) {
     : `<p>Mulai dari <strong>${formatRupiah(product.price)}</strong></p>`;
   return `
     <article class="product-card">
-      <a class="product-image ${meta.bg}" href="/produk/${encodeURIComponent(product.slug || product.id)}" aria-label="Lihat ${escapeHtml(product.name)}">
+      <a class="product-image ${meta.bg} ${photos.length>1?'has-hover-gallery':''}" href="/produk/${encodeURIComponent(product.slug || product.id)}" aria-label="Lihat ${escapeHtml(product.name)}">
         ${productBadges(product)}
         ${image}
       </a>
@@ -249,6 +251,25 @@ function productCard(product) {
         </div>
       </div>
     </article>`;
+}
+
+function initProductCardHoverGalleries(root=document) {
+  if (!window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
+  root.querySelectorAll('.product-image.has-hover-gallery').forEach(card => {
+    if (card.dataset.hoverReady === '1') return;
+    card.dataset.hoverReady = '1';
+    const photos=[...card.querySelectorAll('.product-card-photo')];
+    if(photos.length < 2) return;
+    let timer=null, index=0;
+    const show=(next)=>{photos.forEach((img,i)=>img.classList.toggle('is-active',i===next)); index=next;};
+    card.addEventListener('pointerenter',()=>{
+      if(timer) clearInterval(timer);
+      timer=setInterval(()=>show((index+1)%photos.length),1350);
+    });
+    card.addEventListener('pointerleave',()=>{
+      if(timer) clearInterval(timer); timer=null; show(0);
+    });
+  });
 }
 
 function escapeHtml(value) {
@@ -349,6 +370,7 @@ async function loadCatalog() {
     });
 
     catalogGrid.innerHTML = visible.map(productCard).join('');
+    initProductCardHoverGalleries(catalogGrid);
     if (productCount) productCount.textContent = visible.length;
     if (emptyState) emptyState.hidden = visible.length !== 0;
     catalogGrid.hidden = visible.length === 0;
@@ -407,7 +429,7 @@ async function loadHomepageProducts() {
     return;
   }
 
-  if (data?.length) grid.innerHTML = data.map(productCard).join('');
+  if (data?.length) { grid.innerHTML = data.map(productCard).join(''); initProductCardHoverGalleries(grid); }
 }
 
 async function loadProductDetail() {
@@ -567,6 +589,7 @@ async function loadProductDetail() {
       .neq('id', product.id)
       .limit(3);
     relatedGrid.innerHTML = related?.length ? related.map(productCard).join('') : '<p class="catalog-hint">Belum ada produk terkait pada kategori ini.</p>';
+    initProductCardHoverGalleries(relatedGrid);
   }
 }
 

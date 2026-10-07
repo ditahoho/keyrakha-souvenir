@@ -21,9 +21,10 @@
     <nav id="adminNav">
       <a class="active" href="#dashboard">Dashboard</a>
       <a href="#products">Produk</a>
-      <a href="#categories">Kategori</a>
-      <a href="#data">Data & Backup</a>
-      <a href="#settings">Pengaturan Website</a>
+      <a href="#categories" data-superadmin-only data-role-hidden="true">Kategori</a>
+      <a href="#data" data-superadmin-only data-role-hidden="true">Data & Backup</a>
+      <a href="#settings" data-superadmin-only data-role-hidden="true">Pengaturan Website</a>
+      <a href="#users" data-superadmin-only data-role-hidden="true">Pengguna & Akses</a>
       <a href="/" target="_blank">Lihat Website ↗</a>
     </nav>
     <button id="logoutButton" class="admin-logout">Keluar</button>
@@ -32,7 +33,7 @@
   <main class="admin-main">
     <header class="admin-topbar">
       <div><span class="eyebrow">KEYRAKHA ADMIN</span><h1>Dashboard</h1></div>
-      <div class="admin-user"><span id="adminEmail">Admin</span><span class="admin-user-dot"></span></div>
+      <div class="admin-user"><div><strong id="adminDisplayName">Admin</strong><small id="adminRoleLabel">Memuat akses...</small></div><span class="admin-user-dot"></span></div>
     </header>
 
     <section id="dashboard" class="admin-stats admin-scroll-section">
@@ -67,7 +68,7 @@
       </div>
     </section>
 
-    <section id="categories" class="admin-panel admin-scroll-section">
+    <section id="categories" class="admin-panel admin-scroll-section" data-superadmin-only data-role-hidden="true">
       <div class="admin-panel-heading">
         <div><span class="eyebrow">KATEGORI</span><h2>Kelola Kategori</h2><p>Kategori akan otomatis menjadi filter di halaman katalog.</p></div>
         <button id="addCategoryButton" class="btn btn-primary">+ Tambah Kategori</button>
@@ -80,7 +81,7 @@
       </div>
     </section>
 
-    <section id="data" class="admin-panel admin-scroll-section">
+    <section id="data" class="admin-panel admin-scroll-section" data-superadmin-only data-role-hidden="true">
       <div class="admin-panel-heading">
         <div><span class="eyebrow">DATA & BACKUP</span><h2>Cadangkan Data Katalog</h2><p>Export data untuk arsip, atau restore/merge backup JSON saat diperlukan.</p></div>
         <span class="admin-save-hint">Backup tidak menyimpan password admin.</span>
@@ -88,12 +89,12 @@
       <div class="admin-backup-grid">
         <article class="admin-backup-card"><span>CSV</span><h3>Export Produk</h3><p>Unduh seluruh produk dalam format CSV untuk Excel/arsip.</p><button id="exportCsvButton" class="btn btn-ghost" type="button">Download CSV</button></article>
         <article class="admin-backup-card"><span>JSON</span><h3>Backup Lengkap</h3><p>Cadangkan produk, kategori, dan pengaturan website dalam satu file.</p><button id="backupJsonButton" class="btn btn-ghost" type="button">Download Backup</button></article>
-        <article class="admin-backup-card"><span>RESTORE</span><h3>Restore / Merge</h3><p>Import backup V15. Data dengan slug yang sama akan diperbarui; data lain tetap aman.</p><input id="restoreBackupInput" type="file" accept="application/json,.json" hidden><button id="restoreBackupButton" class="btn btn-primary" type="button">Pilih File Backup</button></article>
+        <article class="admin-backup-card"><span>RESTORE</span><h3>Restore / Merge</h3><p>Pulihkan data dari file backup. Data yang sudah ada akan diperbarui jika ditemukan data yang sama, sementara data lainnya tetap dipertahankan.</p><input id="restoreBackupInput" type="file" accept="application/json,.json" hidden><button id="restoreBackupButton" class="btn btn-primary" type="button">Pilih File Backup</button></article>
       </div>
       <p id="backupMessage" class="admin-message" aria-live="polite"></p>
     </section>
 
-    <section id="settings" class="admin-panel admin-scroll-section">
+    <section id="settings" class="admin-panel admin-scroll-section" data-superadmin-only data-role-hidden="true">
       <div class="admin-panel-heading admin-settings-heading">
         <div><span class="eyebrow">CMS MINI</span><h2>Pengaturan Website</h2><p>Ubah kontak, media sosial, hero, dan informasi bisnis tanpa menyentuh kode.</p></div>
         <span class="admin-save-hint">Perubahan berlaku ke website setelah disimpan.</span>
@@ -190,7 +191,7 @@
                 <label>Text<div class="theme-color-input"><input id="themeTextPicker" type="color"><input id="themeText" type="text" maxlength="7" placeholder="#29201C"></div></label>
                 <label>Muted<div class="theme-color-input"><input id="themeMutedPicker" type="color"><input id="themeMuted" type="text" maxlength="7" placeholder="#766B61"></div></label>
               </div>
-              <p class="theme-note">Pemilihan dropdown hanya menyiapkan tema. Klik <strong>Preview Tema</strong> untuk melihat simulasi. Tema baru diterapkan ke website publik setelah <strong>Simpan Pengaturan</strong>.</p>
+              <p class="theme-note">Pemilihan dropdown hanya menyiapkan tema. Klik <strong>Preview Tema</strong> untuk melihat simulasi. Preview juga diterapkan sementara ke tampilan admin. Tema baru diterapkan permanen ke website publik dan Admin/CMS setelah <strong>Simpan Pengaturan</strong>.</p>
             </div>
 
             <div class="theme-preview-shell">
@@ -214,6 +215,18 @@
         <p id="settingsMessage" class="admin-message" aria-live="polite"></p>
         <div class="admin-settings-actions"><button type="submit" class="btn btn-primary" id="saveSettings">Simpan Pengaturan</button></div>
       </form>
+    </section>
+
+    <section id="users" class="admin-panel admin-scroll-section" data-superadmin-only data-role-hidden="true">
+      <div class="admin-panel-heading">
+        <div><span class="eyebrow">PENGGUNA & AKSES</span><h2>Tim Admin</h2><p>Superadmin dapat menambahkan Editor Produk. Editor hanya dapat mengelola katalog produk dan media.</p></div>
+        <button id="addUserButton" class="btn btn-primary" type="button">+ Tambah User</button>
+      </div>
+      <div class="admin-access-note"><strong>Superadmin</strong><span>Akses penuh: produk, kategori, pengaturan, tema, backup, dan pengguna.</span><strong>Editor Produk</strong><span>Hanya tambah, edit, hapus/nonaktifkan produk dan upload foto produk.</span></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-user-table"><thead><tr><th>Pengguna</th><th>Role</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead><tbody id="adminUserRows"><tr><td colspan="5">Memuat pengguna...</td></tr></tbody></table>
+      </div>
+      <p id="userAccessMessage" class="admin-message" aria-live="polite"></p>
     </section>
   </main>
 </div>
@@ -272,6 +285,21 @@
 </dialog>
 
 <div id="toastHost" class="admin-toast-host" aria-live="polite" aria-atomic="true"></div>
+
+
+<dialog id="userDialog" class="admin-dialog admin-dialog-small">
+  <form id="userForm" class="admin-product-form">
+    <div class="admin-dialog-head"><div><span class="eyebrow">AKSES TIM</span><h2>Tambah Editor Produk</h2></div><button type="button" id="closeUserDialog" class="icon-button" aria-label="Tutup">×</button></div>
+    <div class="admin-form-grid one-column">
+      <label>Nama User<input id="userName" required placeholder="Contoh: Rani"></label>
+      <label>Email<input id="userEmail" type="email" required placeholder="rani@keyrakha.com"></label>
+      <label>Password Awal<input id="userPassword" type="password" minlength="8" required placeholder="Minimal 8 karakter"><small>Berikan password awal ini kepada user secara aman.</small></label>
+      <label>Role<input value="Editor Produk" disabled><small>Editor Produk hanya dapat mengelola produk dan media katalog.</small></label>
+    </div>
+    <p id="userFormMessage" class="admin-message" aria-live="polite"></p>
+    <div class="admin-form-actions"><button type="button" class="btn btn-ghost" id="cancelUser">Batal</button><button type="submit" class="btn btn-primary" id="saveUser">Buat User</button></div>
+  </form>
+</dialog>
 
 <dialog id="confirmDialog" class="admin-confirm-dialog">
   <div class="admin-confirm-card">

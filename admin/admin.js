@@ -26,11 +26,28 @@ function askConfirm({title='Konfirmasi',message,confirmText='Lanjutkan',danger=f
 }
 
 function isLoginPage(){ return location.pathname.endsWith('/login.html') || location.pathname.endsWith('/admin/login'); }
-async function hasAdminRole(session){
-  if(!session) return false;
-  const { data, error } = await db.rpc('is_admin');
-  if(error){ console.error('Admin role check failed:', error); return false; }
-  return data === true;
+async function getAdminProfile(){
+  if(!db) return null;
+  const { data, error } = await db.rpc('get_admin_profile');
+  if(error){ console.error('Admin profile check failed:', error); return null; }
+  return data || null;
+}
+async function loadSavedAdminTheme(){
+  if(!db || !window.KEYRAKHA_THEMES) return;
+  const {data,error}=await db.from('settings').select('theme_preset,theme_primary,theme_secondary,theme_accent,theme_background,theme_surface,theme_text,theme_muted').order('id',{ascending:true}).limit(1).maybeSingle();
+  if(!error && data){
+    const palette=window.KEYRAKHA_THEMES.resolveTheme(data);
+    window.KEYRAKHA_THEMES.applyThemeToElement(document.documentElement,palette);
+  }
+}
+function applyRoleUI(profile){
+  const isSuper=profile?.role==='superadmin';
+  document.querySelectorAll('[data-superadmin-only]').forEach(el=>{
+    el.dataset.roleHidden=isSuper?'false':'true';
+  });
+  const displayName=profile?.name || profile?.email?.split('@')[0] || 'Admin';
+  if($('#adminDisplayName')) $('#adminDisplayName').textContent=displayName;
+  if($('#adminRoleLabel')) $('#adminRoleLabel').textContent=isSuper?'Superadmin':'Editor Produk';
 }
 async function sessionOrRedirect() {
   if (!db) return null;
@@ -38,39 +55,48 @@ async function sessionOrRedirect() {
   const session=data.session;
   if (!session && !isLoginPage()) { location.href = '/admin/login'; return null; }
   if (session) {
-    const allowed=await hasAdminRole(session);
-    if(!allowed){ await db.auth.signOut(); if(!isLoginPage()) location.href='/admin/login?error=unauthorized'; return null; }
+    currentProfile=await getAdminProfile();
+    if(!currentProfile?.active){ await db.auth.signOut(); if(!isLoginPage()) location.href='/admin/login?error=unauthorized'; return null; }
     if(isLoginPage()){ location.href='/admin'; return session; }
   }
   return session;
+}
+function showWelcome(name){
+  const screen=$('#welcomeScreen'); if(!screen)return;
+  $('#welcomeName').textContent=name || 'Admin';
+  screen.hidden=false;
 }
 
 async function initLogin() {
   if (!$('#loginForm')) return;
   if (!db) { $('#loginMessage').textContent = 'Supabase belum dikonfigurasi di js/supabase-config.js.'; return; }
-  if(new URLSearchParams(location.search).get('error')==='unauthorized'){ $('#loginMessage').textContent='Akun tidak memiliki akses admin.'; $('#loginMessage').classList.add('error'); }
+  await loadSavedAdminTheme();
+  if(new URLSearchParams(location.search).get('error')==='unauthorized'){ $('#loginMessage').textContent='Akun tidak memiliki akses aktif ke Admin Keyrakha.'; $('#loginMessage').classList.add('error'); }
   await sessionOrRedirect();
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn=$('#loginButton'), msg=$('#loginMessage');
-    btn.disabled=true; btn.textContent='Memeriksa akun...'; msg.textContent='';
-    const { data:loginData, error } = await db.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
+    btn.disabled=true; btn.textContent='Memeriksa akun...'; msg.textContent=''; msg.className='admin-message';
+    const { error } = await db.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
     if (error) { msg.textContent = 'Login gagal: ' + error.message; msg.classList.add('error'); btn.disabled=false; btn.innerHTML='Masuk ke Dashboard <span>↗</span>'; return; }
-    const allowed=await hasAdminRole(loginData.session);
-    if(!allowed){ await db.auth.signOut(); msg.textContent='Akun ini tidak memiliki role admin.'; msg.classList.add('error'); btn.disabled=false; btn.innerHTML='Masuk ke Dashboard <span>↗</span>'; return; }
-    location.href='/admin';
+    currentProfile=await getAdminProfile();
+    if(!currentProfile?.active){ await db.auth.signOut(); msg.textContent='Akun ini tidak memiliki akses aktif ke Admin Keyrakha.'; msg.classList.add('error'); btn.disabled=false; btn.innerHTML='Masuk ke Dashboard <span>↗</span>'; return; }
+    showWelcome(currentProfile.name || currentProfile.email?.split('@')[0]);
+    setTimeout(()=>{ location.href='/admin'; },1250);
   });
 }
 
 let categories=[];
 let products=[];
 let settings=null;
+let currentProfile=null;
+let adminUsers=[];
 
 async function initDashboard() {
   if (!$('#productRows')) return;
   if (!db) { $('#productRows').innerHTML='<tr><td colspan="6">Supabase belum dikonfigurasi.</td></tr>'; return; }
   const session=await sessionOrRedirect(); if (!session) return;
-  $('#adminEmail').textContent=session.user.email;
+  applyRoleUI(currentProfile);
   $('#logoutButton').addEventListener('click',async()=>{await db.auth.signOut();location.href='/admin/login';});
 
   $('#addProductButton').addEventListener('click',()=>openProductForm());
@@ -95,6 +121,10 @@ async function initDashboard() {
   $('#backupJsonButton')?.addEventListener('click',downloadBackupJson);
   $('#restoreBackupButton')?.addEventListener('click',()=>$('#restoreBackupInput')?.click());
   $('#restoreBackupInput')?.addEventListener('change',restoreBackupJson);
+  $('#addUserButton')?.addEventListener('click',openUserDialog);
+  $('#closeUserDialog')?.addEventListener('click',closeUserDialog);
+  $('#cancelUser')?.addEventListener('click',closeUserDialog);
+  $('#userForm')?.addEventListener('submit',createEditorUser);
   initThemeManager();
   initAdminNavigation();
   await loadAll();
@@ -130,7 +160,9 @@ async function loadAll(){
     return;
   }
   categories=c.data||[]; products=p.data||[]; settings=s.data||null;
+  if(settings && window.KEYRAKHA_THEMES){ const palette=window.KEYRAKHA_THEMES.resolveTheme(settings); window.KEYRAKHA_THEMES.applyThemeToElement(document.documentElement,palette); }
   renderCategories(); renderProducts(); renderCategoryRows(); renderStats(); renderSettings();
+  if(currentProfile?.role==='superadmin') await loadAdminUsers();
 }
 
 function renderCategories(){
@@ -341,7 +373,7 @@ function initThemeManager(){
     setThemePreviewStatus(false);
   });
   $('#previewThemeButton')?.addEventListener('click',()=>{
-    try{ renderThemePreview(currentThemePalette(),false); }catch(err){ toast(err.message,'error'); }
+    try{ const palette=currentThemePalette(); renderThemePreview(palette,false); themeApi()?.applyThemeToElement(document.documentElement,palette); toast('Preview tema diterapkan ke Admin/CMS. Belum disimpan.'); }catch(err){ toast(err.message,'error'); }
   });
   themeIds().forEach(id=>{
     const text=$(`#theme${id}`), picker=$(`#theme${id}Picker`);
@@ -362,7 +394,7 @@ function exportProductsCsv(){
   downloadFile(`keyrakha-products-${new Date().toISOString().slice(0,10)}.csv`,csv,'text/csv;charset=utf-8'); toast('CSV produk berhasil dibuat.');
 }
 function downloadBackupJson(){
-  const payload={version:'15.0',exported_at:new Date().toISOString(),categories:categories.map(({id,...c})=>c),products:products.map(p=>{const {id,categories:cat,category_id,created_at,updated_at,...rest}=p;return {...rest,category_slug:cat?.slug||null};}),settings:settings?Object.fromEntries(Object.entries(settings).filter(([k])=>!['id','created_at','updated_at'].includes(k))):null};
+  const payload={format:'keyrakha-backup',exported_at:new Date().toISOString(),categories:categories.map(({id,...c})=>c),products:products.map(p=>{const {id,categories:cat,category_id,created_at,updated_at,...rest}=p;return {...rest,category_slug:cat?.slug||null};}),settings:settings?Object.fromEntries(Object.entries(settings).filter(([k])=>!['id','created_at','updated_at'].includes(k))):null};
   downloadFile(`keyrakha-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(payload,null,2),'application/json'); toast('Backup JSON berhasil dibuat.');
 }
 async function restoreBackupJson(event){
@@ -381,6 +413,50 @@ async function restoreBackupJson(event){
   }catch(err){ msg.textContent='Restore gagal: '+err.message; msg.classList.add('error'); toast(err.message,'error'); }
 }
 
+
+function roleLabel(role){ return role==='superadmin'?'Superadmin':'Editor Produk'; }
+function openUserDialog(){
+  if(currentProfile?.role!=='superadmin') return;
+  $('#userForm')?.reset();
+  if($('#userFormMessage')) { $('#userFormMessage').textContent=''; $('#userFormMessage').className='admin-message'; }
+  $('#userDialog')?.showModal();
+}
+function closeUserDialog(){ if($('#userDialog')?.open) $('#userDialog').close(); }
+async function loadAdminUsers(){
+  const rows=$('#adminUserRows'); if(!rows)return;
+  const {data,error}=await db.from('admin_users').select('user_id,email,name,role,active,created_at').order('created_at',{ascending:true});
+  if(error){ rows.innerHTML=`<tr><td colspan="5">Gagal memuat pengguna: ${esc(error.message)}</td></tr>`; return; }
+  adminUsers=data||[]; renderAdminUsers();
+}
+function renderAdminUsers(){
+  const rows=$('#adminUserRows'); if(!rows)return;
+  if(!adminUsers.length){ rows.innerHTML='<tr><td colspan="5" class="admin-empty">Belum ada pengguna.</td></tr>'; return; }
+  rows.innerHTML=adminUsers.map(u=>{
+    const name=u.name||u.email?.split('@')[0]||'User';
+    const isSuper=u.role==='superadmin';
+    const created=u.created_at?new Intl.DateTimeFormat('id-ID',{day:'2-digit',month:'short',year:'numeric'}).format(new Date(u.created_at)):'—';
+    return `<tr><td><strong>${esc(name)}</strong><small>${esc(u.email||'')}</small></td><td><span class="admin-role-badge ${isSuper?'superadmin':''}">${roleLabel(u.role)}</span></td><td><span class="admin-pill ${u.active?'on':'off'}">${u.active?'Aktif':'Nonaktif'}</span></td><td>${created}</td><td>${isSuper?'<span class="admin-save-hint">Akun utama</span>':`<div class="admin-actions"><button data-user-toggle="${esc(u.user_id)}" data-next-active="${u.active?'false':'true'}">${u.active?'Nonaktifkan':'Aktifkan'}</button></div>`}</td></tr>`;
+  }).join('');
+  document.querySelectorAll('[data-user-toggle]').forEach(btn=>btn.onclick=()=>toggleAdminUser(btn.dataset.userToggle,btn.dataset.nextActive==='true'));
+}
+async function createEditorUser(e){
+  e.preventDefault(); if(currentProfile?.role!=='superadmin')return;
+  const btn=$('#saveUser'), msg=$('#userFormMessage'); setBusy(btn,true,'Membuat user...','Buat User'); msg.textContent=''; msg.className='admin-message';
+  try{
+    const {data:{session}}=await db.auth.getSession(); if(!session) throw new Error('Sesi admin berakhir. Silakan login ulang.');
+    const resp=await fetch('/api/admin-users',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({name:$('#userName').value.trim(),email:$('#userEmail').value.trim(),password:$('#userPassword').value})});
+    const payload=await resp.json().catch(()=>({})); if(!resp.ok) throw new Error(payload.error||'Gagal membuat user.');
+    closeUserDialog(); await loadAdminUsers(); toast('Editor Produk berhasil dibuat.');
+  }catch(err){ msg.textContent=err.message; msg.classList.add('error'); toast(err.message,'error'); }
+  finally{ setBusy(btn,false,'Membuat user...','Buat User'); }
+}
+async function toggleAdminUser(userId,active){
+  const target=adminUsers.find(u=>u.user_id===userId); if(!target||target.role==='superadmin')return;
+  const ok=await askConfirm({title:active?'Aktifkan akses user?':'Nonaktifkan akses user?',message:`${target.name||target.email} ${active?'akan dapat login kembali':'tidak akan dapat mengakses dashboard sampai diaktifkan kembali'}.`,confirmText:active?'Aktifkan':'Nonaktifkan',danger:!active}); if(!ok)return;
+  const {error}=await db.from('admin_users').update({active,updated_at:new Date().toISOString()}).eq('user_id',userId); if(error){toast(error.message,'error');return;}
+  await loadAdminUsers(); toast(active?'Akses user diaktifkan.':'Akses user dinonaktifkan.');
+}
+
 async function saveSettings(e){
   e.preventDefault(); const btn=$('#saveSettings'),msg=$('#settingsMessage'); setBusy(btn,true,'Menyimpan...','Simpan Pengaturan'); msg.textContent=''; msg.className='admin-message';
   let selectedTheme;
@@ -392,7 +468,7 @@ async function saveSettings(e){
   try{
     const q=settings?.id?db.from('settings').update(payload).eq('id',settings.id):db.from('settings').insert(payload).select().single();
     const {data,error}=await q; if(error) throw error; if(data) settings=data; else settings={...(settings||{}),...payload};
-    msg.textContent='Pengaturan berhasil disimpan. Website publik akan memakai data terbaru.'; settings={...(settings||{}),...payload}; renderThemePreview(selectedTheme,true); toast('Pengaturan website berhasil disimpan.');
+    msg.textContent='Pengaturan berhasil disimpan. Website publik dan Admin/CMS memakai tema terbaru.'; settings={...(settings||{}),...payload}; renderThemePreview(selectedTheme,true); themeApi()?.applyThemeToElement(document.documentElement,selectedTheme); toast('Pengaturan website berhasil disimpan.');
   }catch(err){msg.textContent='Gagal menyimpan pengaturan: '+err.message;msg.classList.add('error');toast(err.message,'error');}
   finally{setBusy(btn,false,'Menyimpan...','Simpan Pengaturan');}
 }

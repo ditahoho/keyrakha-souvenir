@@ -410,7 +410,51 @@ async function loadProductDetail() {
   setText('#detailDescription', product.description || 'Hubungi Keyrakha untuk informasi detail produk dan opsi custom.');
   setText('#specCategory', meta.label);
   setText('#specMinimum', `${Number(product.minimum_order || 1)} pcs`);
-  document.title = `${product.name} — Keyrakha Souvenir`;
+  document.title = `${product.name} | Keyrakha Souvenir`;
+
+  // Dynamic SEO for individual product pages.
+  const seoDescription = (product.description || `Lihat ${product.name} dari Keyrakha Souvenir dan konsultasikan kebutuhan custom Anda.`).replace(/\s+/g, ' ').trim().slice(0, 155);
+  const productUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(product.id)}`;
+  const productImage = product.image_url || `${window.location.origin}/assets/og-cover.png`;
+  const setMeta = (selector, attr, value) => {
+    const el = document.querySelector(selector);
+    if (el && value) el.setAttribute(attr, value);
+  };
+  const metaDescription = document.querySelector('meta[name="description"]');
+  if (metaDescription) metaDescription.setAttribute('content', seoDescription);
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical) canonical.setAttribute('href', productUrl);
+  setMeta('meta[property="og:title"]', 'content', `${product.name} | Keyrakha Souvenir`);
+  setMeta('meta[property="og:description"]', 'content', seoDescription);
+  setMeta('meta[property="og:url"]', 'content', productUrl);
+  setMeta('meta[property="og:image"]', 'content', productImage);
+  setMeta('meta[name="twitter:title"]', 'content', `${product.name} | Keyrakha Souvenir`);
+  setMeta('meta[name="twitter:description"]', 'content', seoDescription);
+  setMeta('meta[name="twitter:image"]', 'content', productImage);
+
+  let productSchema = document.querySelector('#productStructuredData');
+  if (!productSchema) {
+    productSchema = document.createElement('script');
+    productSchema.type = 'application/ld+json';
+    productSchema.id = 'productStructuredData';
+    document.head.appendChild(productSchema);
+  }
+  productSchema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: seoDescription,
+    image: [productImage],
+    category: meta.label,
+    brand: { '@type': 'Brand', name: 'Keyrakha Souvenir' },
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'IDR',
+      price: String(promoActive ? product.promo_price : product.price || ''),
+      availability: 'https://schema.org/InStock'
+    }
+  });
 
   const visual = document.querySelector('#detailVisual');
   if (visual) {

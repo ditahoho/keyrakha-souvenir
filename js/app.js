@@ -255,6 +255,9 @@ async function loadCatalog() {
   const productCount = document.querySelector('#productCount');
   const emptyState = document.querySelector('#catalogEmpty');
   const resetButton = document.querySelector('#resetCatalog');
+  const clearFilterButton = document.querySelector('#clearCatalogFilters');
+  const highlightFilter = document.querySelector('#productHighlightFilter');
+  const priceFilter = document.querySelector('#productPriceFilter');
   const statusText = document.querySelector('#catalogStatus');
 
   if (!client) {
@@ -266,7 +269,7 @@ async function loadCatalog() {
   if (statusText) statusText.textContent = 'Memuat produk...';
 
   const [{ data: products, error: productError }, { data: categories, error: categoryError }] = await Promise.all([
-    client.from('products').select('id,name,slug,description,price,minimum_order,image_url,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,active,created_at,category_id,categories(name,slug)').eq('active', true),
+    client.from('products').select('id,name,slug,description,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,active,created_at,category_id,categories(name,slug)').eq('active', true),
     client.from('categories').select('id,name,slug').order('name')
   ]);
 
@@ -302,7 +305,20 @@ async function loadCatalog() {
       const meta = productMeta(product);
       const matchesCategory = activeCategory === 'all' || meta.slug === activeCategory;
       const haystack = `${product.name} ${meta.label} ${product.description || ''}`.toLowerCase();
-      return matchesCategory && haystack.includes(query);
+      const highlight = highlightFilter?.value || 'all';
+      const matchesHighlight = highlight === 'all' ||
+        (highlight === 'promo' && isPromoActive(product)) ||
+        (highlight === 'bestseller' && product.best_seller) ||
+        (highlight === 'new' && product.is_new) ||
+        (highlight === 'featured' && product.featured);
+      const activePrice = Number(isPromoActive(product) ? product.promo_price : product.price || 0);
+      const range = priceFilter?.value || 'all';
+      const matchesPrice = range === 'all' ||
+        (range === 'under-50' && activePrice < 50000) ||
+        (range === '50-100' && activePrice >= 50000 && activePrice <= 100000) ||
+        (range === '100-250' && activePrice > 100000 && activePrice <= 250000) ||
+        (range === 'over-250' && activePrice > 250000);
+      return matchesCategory && haystack.includes(query) && matchesHighlight && matchesPrice;
     });
 
     const sort = sortSelect?.value || 'featured';
@@ -336,9 +352,20 @@ async function loadCatalog() {
   chips.forEach(chip => chip.addEventListener('click', () => activateChip(chip.dataset.category)));
   searchInput?.addEventListener('input', renderProducts);
   sortSelect?.addEventListener('change', renderProducts);
+  highlightFilter?.addEventListener('change', renderProducts);
+  priceFilter?.addEventListener('change', renderProducts);
   resetButton?.addEventListener('click', () => {
     if (searchInput) searchInput.value = '';
     if (sortSelect) sortSelect.value = 'featured';
+    if (highlightFilter) highlightFilter.value = 'all';
+    if (priceFilter) priceFilter.value = 'all';
+    activateChip('all');
+  });
+  clearFilterButton?.addEventListener('click', () => {
+    if (searchInput) searchInput.value = '';
+    if (sortSelect) sortSelect.value = 'featured';
+    if (highlightFilter) highlightFilter.value = 'all';
+    if (priceFilter) priceFilter.value = 'all';
     activateChip('all');
   });
 
@@ -353,7 +380,7 @@ async function loadHomepageProducts() {
 
   const { data, error } = await client
     .from('products')
-    .select('id,name,price,minimum_order,image_url,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
+    .select('id,name,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
     .eq('active', true)
     .eq('featured', true)
     .order('created_at', { ascending: false })
@@ -382,7 +409,7 @@ async function loadProductDetail() {
 
   const { data: product, error } = await client
     .from('products')
-    .select('id,name,slug,description,price,minimum_order,image_url,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
+    .select('id,name,slug,description,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
     .eq('id', id)
     .eq('active', true)
     .maybeSingle();
@@ -415,7 +442,8 @@ async function loadProductDetail() {
   // Dynamic SEO for individual product pages.
   const seoDescription = (product.description || `Lihat ${product.name} dari Keyrakha Souvenir dan konsultasikan kebutuhan custom Anda.`).replace(/\s+/g, ' ').trim().slice(0, 155);
   const productUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(product.id)}`;
-  const productImage = product.image_url || `${window.location.origin}/assets/og-cover.png`;
+  const seoGallery = [product.image_url, ...(Array.isArray(product.gallery_urls) ? product.gallery_urls : [])].filter(Boolean);
+  const productImage = seoGallery[0] || `${window.location.origin}/assets/og-cover.png`;
   const setMeta = (selector, attr, value) => {
     const el = document.querySelector(selector);
     if (el && value) el.setAttribute(attr, value);
@@ -444,7 +472,7 @@ async function loadProductDetail() {
     '@type': 'Product',
     name: product.name,
     description: seoDescription,
-    image: [productImage],
+    image: seoGallery.length ? seoGallery : [productImage],
     category: meta.label,
     brand: { '@type': 'Brand', name: 'Keyrakha Souvenir' },
     offers: {
@@ -457,13 +485,29 @@ async function loadProductDetail() {
   });
 
   const visual = document.querySelector('#detailVisual');
-  if (visual) {
+  const thumbs = document.querySelector('#detailThumbs');
+  const galleryNote = document.querySelector('#galleryNote');
+  const galleryUrls = Array.isArray(product.gallery_urls) ? product.gallery_urls.filter(Boolean) : [];
+  const galleryImages = [product.image_url, ...galleryUrls].filter(Boolean).filter((url, index, arr) => arr.indexOf(url) === index);
+  const renderGalleryImage = (url, index = 0) => {
+    if (!visual) return;
     visual.className = `detail-visual ${meta.bg}`;
-    if (product.image_url) {
-      visual.innerHTML = `${productBadges(product)}<img class="detail-real-image" src="${product.image_url}" alt="${escapeHtml(product.name)}">`;
-    } else {
-      visual.innerHTML = `${productBadges(product)}<div class="mock-product ${meta.art}">${meta.artContent}</div>`;
+    visual.innerHTML = url
+      ? `${productBadges(product)}<img class="detail-real-image" src="${url}" alt="${escapeHtml(product.name)} - foto ${index + 1}">`
+      : `${productBadges(product)}<div class="mock-product ${meta.art}">${meta.artContent}</div>`;
+    thumbs?.querySelectorAll('.detail-thumb').forEach((btn, i) => btn.classList.toggle('active', i === index));
+  };
+  if (galleryImages.length) {
+    renderGalleryImage(galleryImages[0], 0);
+    if (thumbs) {
+      thumbs.innerHTML = galleryImages.map((url, index) => `<button class="detail-thumb ${index === 0 ? 'active' : ''}" type="button" data-gallery-index="${index}" aria-label="Foto produk ${index + 1}"><img src="${url}" alt=""></button>`).join('');
+      thumbs.querySelectorAll('[data-gallery-index]').forEach(btn => btn.addEventListener('click', () => renderGalleryImage(galleryImages[Number(btn.dataset.galleryIndex)], Number(btn.dataset.galleryIndex))));
     }
+    if (galleryNote) galleryNote.hidden = galleryImages.length <= 1;
+  } else {
+    renderGalleryImage(null, 0);
+    if (thumbs) thumbs.innerHTML = '';
+    if (galleryNote) galleryNote.textContent = 'Foto produk asli akan tampil setelah ditambahkan melalui admin.';
   }
 
   const wa = document.querySelector('#detailWhatsapp');
@@ -471,11 +515,32 @@ async function loadProductDetail() {
     wa.href = whatsappUrl(`Halo Keyrakha Souvenir, saya tertarik dengan ${product.name}. Boleh minta informasi lebih lanjut?`);
   }
 
+  setMeta('meta[property="og:type"]', 'content', 'product');
+  let priceMeta = document.querySelector('meta[property="product:price:amount"]');
+  if (!priceMeta) { priceMeta = document.createElement('meta'); priceMeta.setAttribute('property','product:price:amount'); document.head.appendChild(priceMeta); }
+  priceMeta.setAttribute('content', String(promoActive ? product.promo_price : product.price || ''));
+  let currencyMeta = document.querySelector('meta[property="product:price:currency"]');
+  if (!currencyMeta) { currencyMeta = document.createElement('meta'); currencyMeta.setAttribute('property','product:price:currency'); document.head.appendChild(currencyMeta); }
+  currencyMeta.setAttribute('content','IDR');
+
+  const shareStatus = document.querySelector('#shareStatus');
+  const sharePayload = { title: `${product.name} | Keyrakha Souvenir`, text: `Lihat ${product.name} dari Keyrakha Souvenir.`, url: productUrl };
+  document.querySelector('#shareProduct')?.addEventListener('click', async () => {
+    try {
+      if (navigator.share) await navigator.share(sharePayload);
+      else { await navigator.clipboard.writeText(productUrl); if (shareStatus) shareStatus.textContent = 'Link produk disalin.'; }
+    } catch (err) { if (err?.name !== 'AbortError' && shareStatus) shareStatus.textContent = 'Belum bisa membagikan link.'; }
+  });
+  document.querySelector('#copyProductLink')?.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(productUrl); if (shareStatus) shareStatus.textContent = 'Link produk berhasil disalin.'; }
+    catch { if (shareStatus) shareStatus.textContent = 'Gagal menyalin link.'; }
+  });
+
   const relatedGrid = document.querySelector('#relatedGrid');
   if (relatedGrid && product.category_id) {
     const { data: related } = await client
       .from('products')
-      .select('id,name,price,minimum_order,image_url,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
+      .select('id,name,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
       .eq('active', true)
       .eq('category_id', product.category_id)
       .neq('id', product.id)

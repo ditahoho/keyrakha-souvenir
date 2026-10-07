@@ -61,12 +61,8 @@
               <span id="detailBadge" class="product-badge" hidden></span>
               <div id="detailArt" class="mock-product tumbler-mock"><span>K</span></div>
             </div>
-            <div class="detail-thumbs" aria-label="Galeri produk">
-              <button class="detail-thumb active" type="button" aria-label="Tampilan produk 1">01</button>
-              <button class="detail-thumb" type="button" aria-label="Tampilan produk 2">02</button>
-              <button class="detail-thumb" type="button" aria-label="Tampilan produk 3">03</button>
-            </div>
-            <p class="gallery-note">Visual produk saat ini masih berupa mockup. Foto produk asli akan menggantikannya saat katalog dikelola dari admin.</p>
+            <div id="detailThumbs" class="detail-thumbs" aria-label="Galeri produk"></div>
+            <p id="galleryNote" class="gallery-note">Pilih foto untuk melihat detail produk dari sudut yang berbeda.</p>
           </div>
 
           <div class="product-detail-copy">
@@ -96,6 +92,11 @@
             </div>
 
             <a id="detailWhatsapp" class="btn btn-primary btn-wide" href="#" target="_blank" rel="noopener">Tanya Produk Ini via WhatsApp <span>↗</span></a>
+            <div class="product-share-actions">
+              <button id="shareProduct" class="btn btn-ghost product-share-btn" type="button">Bagikan Produk <span>↗</span></button>
+              <button id="copyProductLink" class="btn btn-ghost product-share-btn" type="button">Salin Link</button>
+            </div>
+            <p id="shareStatus" class="share-status" aria-live="polite"></p>
             <p class="detail-help-text">Belum yakin? Ceritakan jumlah, acara, dan budget Anda. Kami bantu carikan opsi yang sesuai.</p>
           </div>
         </div>

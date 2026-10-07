@@ -63,6 +63,7 @@ async function initDashboard() {
   $('#cancelProduct').addEventListener('click',closeProductForm);
   $('#productForm').addEventListener('submit',saveProduct);
   $('#productImage').addEventListener('change',previewFile);
+  $('#productGallery').addEventListener('change',previewGalleryFiles);
   $('#productPromo').addEventListener('change',togglePromoFields);
 
   $('#addCategoryButton').addEventListener('click',()=>openCategoryForm());
@@ -142,14 +143,42 @@ function renderCategoryRows(){
 }
 
 function openProductForm(p=null){
-  $('#productForm').reset(); $('#productId').value=p?.id||''; $('#existingImageUrl').value=p?.image_url||''; $('#formTitle').textContent=p?'Edit Produk':'Tambah Produk';
+  $('#productForm').reset(); $('#productId').value=p?.id||''; $('#existingImageUrl').value=p?.image_url||''; $('#existingGalleryUrls').value=JSON.stringify(Array.isArray(p?.gallery_urls)?p.gallery_urls:[]); $('#formTitle').textContent=p?'Edit Produk':'Tambah Produk';
   $('#productName').value=p?.name||''; $('#productCategory').value=p?.category_id||''; $('#productPrice').value=p?.price??''; $('#productMinimum').value=p?.minimum_order||1; $('#productDescription').value=p?.description||''; $('#productActive').checked=p?p.active:true; $('#productFeatured').checked=Boolean(p?.featured); $('#productBestSeller').checked=Boolean(p?.best_seller); $('#productNew').checked=Boolean(p?.is_new); $('#productPromo').checked=Boolean(p?.promo_enabled); $('#productPromoPrice').value=p?.promo_price??''; $('#productPromoStart').value=p?.promo_start||''; $('#productPromoEnd').value=p?.promo_end||''; togglePromoFields(); $('#formMessage').textContent=''; $('#formMessage').className='admin-message';
   if(p?.image_url){$('#imagePreview').src=p.image_url;$('#imagePreviewWrap').hidden=false;}else{$('#imagePreviewWrap').hidden=true;$('#imagePreview').removeAttribute('src');}
+  renderGalleryPreview(Array.isArray(p?.gallery_urls)?p.gallery_urls:[]);
   $('#productDialog').showModal();
 }
 function closeProductForm(){ $('#productDialog').close(); }
 function togglePromoFields(){ const on=$('#productPromo').checked; $('#promoFields').hidden=!on; $('#productPromoPrice').required=on; }
 function previewFile(){ const f=$('#productImage').files[0]; if(!f)return; if(f.size>5*1024*1024){toast('Foto maksimal 5 MB.','error');$('#productImage').value='';return;} const ok=['image/jpeg','image/png','image/webp'].includes(f.type); if(!ok){toast('Gunakan JPG, PNG, atau WebP.','error');$('#productImage').value='';return;} $('#imagePreview').src=URL.createObjectURL(f);$('#imagePreviewWrap').hidden=false; }
+function validateImageFile(file){
+  if(file.size>5*1024*1024) throw new Error(`${file.name}: ukuran foto maksimal 5 MB.`);
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)) throw new Error(`${file.name}: gunakan JPG, PNG, atau WebP.`);
+}
+function renderGalleryPreview(urls=[]){
+  const wrap=$('#galleryPreviewWrap'); if(!wrap)return;
+  wrap.innerHTML=urls.map((url,i)=>`<figure><img src="${esc(url)}" alt="Galeri ${i+1}"><figcaption>${String(i+1).padStart(2,'0')}</figcaption></figure>`).join('');
+  wrap.hidden=!urls.length;
+}
+function previewGalleryFiles(){
+  const files=[...$('#productGallery').files];
+  if(files.length>5){toast('Maksimal 5 foto galeri.','error');$('#productGallery').value='';renderGalleryPreview(JSON.parse($('#existingGalleryUrls').value||'[]'));return;}
+  try{files.forEach(validateImageFile);}catch(err){toast(err.message,'error');$('#productGallery').value='';return;}
+  renderGalleryPreview(files.map(file=>URL.createObjectURL(file)));
+}
+async function uploadGallery(files, productName){
+  if(!files?.length) return JSON.parse($('#existingGalleryUrls').value||'[]');
+  const urls=[];
+  for(let i=0;i<files.length;i++){
+    const file=files[i]; validateImageFile(file);
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    const path=`${Date.now()}-${i+1}-${slugify(productName)||'produk'}.${ext}`;
+    const {error}=await db.storage.from('products').upload(path,file,{cacheControl:'3600',upsert:false}); if(error) throw error;
+    urls.push(db.storage.from('products').getPublicUrl(path).data.publicUrl);
+  }
+  return urls;
+}
 async function uploadImage(file, productName){
   if(!file) return $('#existingImageUrl').value||null;
   if(file.size>5*1024*1024) throw new Error('Ukuran foto maksimal 5 MB.');
@@ -167,7 +196,8 @@ async function saveProduct(e){
     if(promoEnabled && (!promoPrice || promoPrice>=normalPrice)) throw new Error('Harga promo harus lebih rendah dari harga normal.');
     if(promoEnabled && promoStart && promoEnd && promoEnd<promoStart) throw new Error('Tanggal berakhir promo tidak boleh lebih awal dari tanggal mulai.');
     const imageUrl=await uploadImage($('#productImage').files[0],name);
-    const payload={name,slug:slugify(name),category_id:Number($('#productCategory').value),price:normalPrice,minimum_order:Number($('#productMinimum').value||1),description:$('#productDescription').value.trim(),image_url:imageUrl,active:$('#productActive').checked,featured:$('#productFeatured').checked,best_seller:$('#productBestSeller').checked,is_new:$('#productNew').checked,promo_enabled:promoEnabled,promo_price:promoEnabled?promoPrice:null,promo_start:promoEnabled?promoStart:null,promo_end:promoEnabled?promoEnd:null};
+    const galleryUrls=await uploadGallery([...$('#productGallery').files],name);
+    const payload={name,slug:slugify(name),category_id:Number($('#productCategory').value),price:normalPrice,minimum_order:Number($('#productMinimum').value||1),description:$('#productDescription').value.trim(),image_url:imageUrl,gallery_urls:galleryUrls,active:$('#productActive').checked,featured:$('#productFeatured').checked,best_seller:$('#productBestSeller').checked,is_new:$('#productNew').checked,promo_enabled:promoEnabled,promo_price:promoEnabled?promoPrice:null,promo_start:promoEnabled?promoStart:null,promo_end:promoEnabled?promoEnd:null};
     const id=$('#productId').value; const q=id?db.from('products').update(payload).eq('id',id):db.from('products').insert(payload); const {error}=await q; if(error) throw error;
     closeProductForm(); await loadAll(); toast(id?'Produk berhasil diperbarui.':'Produk berhasil ditambahkan.');
   }catch(err){msg.textContent='Gagal menyimpan: '+err.message;msg.classList.add('error');toast(err.message,'error');}

@@ -90,6 +90,30 @@
           <button class="filter-chip" type="button" data-category="lainnya">Lainnya</button>
         </div>
 
+        <div class="catalog-advanced-filters" aria-label="Filter tambahan produk">
+          <label>
+            <span>Sorotan</span>
+            <select id="productHighlightFilter">
+              <option value="all">Semua produk</option>
+              <option value="promo">Sedang Promo</option>
+              <option value="bestseller">Best Seller</option>
+              <option value="new">Produk Baru</option>
+              <option value="featured">Produk Pilihan</option>
+            </select>
+          </label>
+          <label>
+            <span>Rentang Harga</span>
+            <select id="productPriceFilter">
+              <option value="all">Semua harga</option>
+              <option value="under-50">Di bawah Rp50.000</option>
+              <option value="50-100">Rp50.000 – Rp100.000</option>
+              <option value="100-250">Rp100.000 – Rp250.000</option>
+              <option value="over-250">Di atas Rp250.000</option>
+            </select>
+          </label>
+          <button id="clearCatalogFilters" class="catalog-clear-filter" type="button">Reset Filter</button>
+        </div>
+
         <div class="catalog-meta">
           <p><strong id="productCount">0</strong> produk ditemukan</p>
           <p class="catalog-hint">Harga ditampilkan sebagai harga awal dan dapat menyesuaikan jumlah serta spesifikasi custom.</p>

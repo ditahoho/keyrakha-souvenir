@@ -112,13 +112,14 @@
 <dialog id="productDialog" class="admin-dialog">
   <form id="productForm" class="admin-product-form">
     <div class="admin-dialog-head"><div><span class="eyebrow">PRODUK</span><h2 id="formTitle">Tambah Produk</h2></div><button type="button" id="closeDialog" class="icon-button" aria-label="Tutup">×</button></div>
-    <input type="hidden" id="productId"><input type="hidden" id="existingImageUrl">
+    <input type="hidden" id="productId"><input type="hidden" id="existingImageUrl"><input type="hidden" id="existingGalleryUrls">
     <div class="admin-form-grid">
       <label class="full">Nama Produk<input id="productName" required placeholder="Contoh: Tumbler Stainless Custom"></label>
       <label>Kategori<select id="productCategory" required></select></label>
       <label>Harga Mulai (Rp)<input id="productPrice" type="number" min="0" step="1000" required placeholder="35000"></label>
       <label>Minimum Order<input id="productMinimum" type="number" min="1" value="1" required></label>
-      <label>Foto Produk<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP. Maks. 5 MB.</small></label>
+      <label>Foto Utama<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP. Maks. 5 MB.</small></label>
+      <label class="full">Galeri Foto Tambahan<input id="productGallery" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Maks. 5 foto tambahan. Jika memilih foto baru saat Edit, galeri lama akan diganti.</small></label>
       <label class="full">Deskripsi<textarea id="productDescription" rows="5" placeholder="Jelaskan bahan, ukuran, kegunaan, dan opsi custom..."></textarea></label>
       <div class="admin-product-flags full">
         <span class="admin-field-title">Status & Label Produk</span>
@@ -139,7 +140,10 @@
         <small>Jika tanggal dikosongkan, promo dianggap aktif selama status “Sedang Promo” dicentang.</small>
       </div>
     </div>
-    <div id="imagePreviewWrap" class="admin-image-preview" hidden><img id="imagePreview" alt="Preview foto produk"></div>
+    <div class="admin-media-preview-row">
+      <div id="imagePreviewWrap" class="admin-image-preview" hidden><img id="imagePreview" alt="Preview foto utama"></div>
+      <div id="galleryPreviewWrap" class="admin-gallery-preview" hidden></div>
+    </div>
     <p id="formMessage" class="admin-message" aria-live="polite"></p>
     <div class="admin-form-actions"><button type="button" class="btn btn-ghost" id="cancelProduct">Batal</button><button type="submit" class="btn btn-primary" id="saveProduct">Simpan Produk</button></div>
   </form>

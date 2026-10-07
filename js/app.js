@@ -236,13 +236,13 @@ function productCard(product) {
     : `<p>Mulai dari <strong>${formatRupiah(product.price)}</strong></p>`;
   return `
     <article class="product-card">
-      <a class="product-image ${meta.bg}" href="product.html?id=${product.id}" aria-label="Lihat ${escapeHtml(product.name)}">
+      <a class="product-image ${meta.bg}" href="/produk/${encodeURIComponent(product.slug || product.id)}" aria-label="Lihat ${escapeHtml(product.name)}">
         ${productBadges(product)}
         ${image}
       </a>
       <div class="product-info">
         <span class="product-category">${escapeHtml(meta.label)}</span>
-        <h3><a href="product.html?id=${product.id}">${escapeHtml(product.name)}</a></h3>
+        <h3><a href="/produk/${encodeURIComponent(product.slug || product.id)}">${escapeHtml(product.name)}</a></h3>
         <div class="product-price-row">
           ${priceHtml}
           <span class="product-minimum">Min. ${Number(product.minimum_order || 1)} pcs</span>
@@ -417,22 +417,26 @@ async function loadProductDetail() {
   const client = getSupabaseClient();
   if (!client) return;
 
-  const id = new URLSearchParams(window.location.search).get('id');
-  if (!id) {
-    detailRoot.innerHTML = '<div class="container"><div class="data-notice error"><strong>Produk tidak ditemukan.</strong><span>Kembali ke katalog untuk memilih produk.</span></div></div>';
+  const params = new URLSearchParams(window.location.search);
+  const pathMatch = window.location.pathname.match(/^\/produk\/([^/]+)\/?$/);
+  const pathSlug = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+  const slug = params.get('slug') || pathSlug;
+  const id = params.get('id');
+  if (!slug && !id) {
+    detailRoot.innerHTML = '<div class="container"><div class="data-notice error"><strong>Produk tidak ditemukan.</strong><span>Kembali ke katalog untuk memilih produk.</span><a class="text-link" href="/produk">Kembali ke katalog →</a></div></div>';
     return;
   }
 
-  const { data: product, error } = await client
+  let productQuery = client
     .from('products')
     .select('id,name,slug,description,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
-    .eq('id', id)
-    .eq('active', true)
-    .maybeSingle();
+    .eq('active', true);
+  productQuery = slug ? productQuery.eq('slug', slug) : productQuery.eq('id', id);
+  const { data: product, error } = await productQuery.maybeSingle();
 
   if (error || !product) {
     console.error(error);
-    detailRoot.innerHTML = '<div class="container"><div class="data-notice error"><strong>Produk tidak ditemukan.</strong><span>Produk mungkin sedang tidak aktif atau sudah dihapus.</span><a class="text-link" href="products.html">Kembali ke katalog →</a></div></div>';
+    detailRoot.innerHTML = '<div class="container"><div class="data-notice error"><strong>Produk tidak ditemukan.</strong><span>Produk mungkin sedang tidak aktif atau sudah dihapus.</span><a class="text-link" href="/produk">Kembali ke katalog →</a></div></div>';
     return;
   }
 
@@ -457,7 +461,8 @@ async function loadProductDetail() {
 
   // Dynamic SEO for individual product pages.
   const seoDescription = (product.description || `Lihat ${product.name} dari Keyrakha Souvenir dan konsultasikan kebutuhan custom Anda.`).replace(/\s+/g, ' ').trim().slice(0, 155);
-  const productUrl = `${window.location.origin}${window.location.pathname}?id=${encodeURIComponent(product.id)}`;
+  const productUrl = `${window.location.origin}/produk/${encodeURIComponent(product.slug || product.id)}`;
+  if (window.location.protocol.startsWith('http') && window.location.pathname !== `/produk/${product.slug || product.id}`) window.history.replaceState({}, '', `/produk/${product.slug || product.id}`);
   const seoGallery = [product.image_url, ...(Array.isArray(product.gallery_urls) ? product.gallery_urls : [])].filter(Boolean);
   const productImage = seoGallery[0] || `${window.location.origin}/assets/og-cover.png`;
   const setMeta = (selector, attr, value) => {
@@ -566,12 +571,17 @@ async function loadProductDetail() {
 }
 
 async function initializeSite() {
-  await loadSettings();
-  await Promise.all([
-    loadCatalog(),
-    loadHomepageProducts(),
-    loadProductDetail()
-  ]);
+  document.body.classList.add('site-loading');
+  try {
+    await loadSettings();
+    await Promise.all([
+      loadCatalog(),
+      loadHomepageProducts(),
+      loadProductDetail()
+    ]);
+  } finally {
+    document.body.classList.remove('site-loading');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initializeSite);

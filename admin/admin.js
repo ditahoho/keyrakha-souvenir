@@ -25,25 +25,40 @@ function askConfirm({title='Konfirmasi',message,confirmText='Lanjutkan',danger=f
   });
 }
 
+function isLoginPage(){ return location.pathname.endsWith('/login.html') || location.pathname.endsWith('/admin/login'); }
+async function hasAdminRole(session){
+  if(!session) return false;
+  const { data, error } = await db.rpc('is_admin');
+  if(error){ console.error('Admin role check failed:', error); return false; }
+  return data === true;
+}
 async function sessionOrRedirect() {
   if (!db) return null;
   const { data } = await db.auth.getSession();
-  if (!data.session && !location.pathname.endsWith('/login.html')) location.href = 'login.html';
-  if (data.session && location.pathname.endsWith('/login.html')) location.href = 'index.html';
-  return data.session;
+  const session=data.session;
+  if (!session && !isLoginPage()) { location.href = '/admin/login'; return null; }
+  if (session) {
+    const allowed=await hasAdminRole(session);
+    if(!allowed){ await db.auth.signOut(); if(!isLoginPage()) location.href='/admin/login?error=unauthorized'; return null; }
+    if(isLoginPage()){ location.href='/admin'; return session; }
+  }
+  return session;
 }
 
 async function initLogin() {
   if (!$('#loginForm')) return;
   if (!db) { $('#loginMessage').textContent = 'Supabase belum dikonfigurasi di js/supabase-config.js.'; return; }
+  if(new URLSearchParams(location.search).get('error')==='unauthorized'){ $('#loginMessage').textContent='Akun tidak memiliki akses admin.'; $('#loginMessage').classList.add('error'); }
   await sessionOrRedirect();
   $('#loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn=$('#loginButton'), msg=$('#loginMessage');
     btn.disabled=true; btn.textContent='Memeriksa akun...'; msg.textContent='';
-    const { error } = await db.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
+    const { data:loginData, error } = await db.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value});
     if (error) { msg.textContent = 'Login gagal: ' + error.message; msg.classList.add('error'); btn.disabled=false; btn.innerHTML='Masuk ke Dashboard <span>↗</span>'; return; }
-    location.href='index.html';
+    const allowed=await hasAdminRole(loginData.session);
+    if(!allowed){ await db.auth.signOut(); msg.textContent='Akun ini tidak memiliki role admin.'; msg.classList.add('error'); btn.disabled=false; btn.innerHTML='Masuk ke Dashboard <span>↗</span>'; return; }
+    location.href='/admin';
   });
 }
 
@@ -56,7 +71,7 @@ async function initDashboard() {
   if (!db) { $('#productRows').innerHTML='<tr><td colspan="6">Supabase belum dikonfigurasi.</td></tr>'; return; }
   const session=await sessionOrRedirect(); if (!session) return;
   $('#adminEmail').textContent=session.user.email;
-  $('#logoutButton').addEventListener('click',async()=>{await db.auth.signOut();location.href='login.html';});
+  $('#logoutButton').addEventListener('click',async()=>{await db.auth.signOut();location.href='/admin/login';});
 
   $('#addProductButton').addEventListener('click',()=>openProductForm());
   $('#closeDialog').addEventListener('click',closeProductForm);
@@ -76,6 +91,10 @@ async function initDashboard() {
   $('#categorySlug').addEventListener('input',()=>{$('#categorySlug').dataset.auto='off';});
 
   $('#settingsForm').addEventListener('submit',saveSettings);
+  $('#exportCsvButton')?.addEventListener('click',exportProductsCsv);
+  $('#backupJsonButton')?.addEventListener('click',downloadBackupJson);
+  $('#restoreBackupButton')?.addEventListener('click',()=>$('#restoreBackupInput')?.click());
+  $('#restoreBackupInput')?.addEventListener('change',restoreBackupJson);
   initThemeManager();
   initAdminNavigation();
   await loadAll();
@@ -117,11 +136,24 @@ async function loadAll(){
 function renderCategories(){
   $('#productCategory').innerHTML='<option value="">Pilih kategori</option>'+categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
 }
+function promoIsActiveAdmin(p){
+  if(!p?.promo_enabled || !p?.promo_price) return false;
+  const today=new Date().toISOString().slice(0,10);
+  return (!p.promo_start || p.promo_start<=today) && (!p.promo_end || p.promo_end>=today);
+}
 function renderStats(){
   $('#statTotal').textContent=products.length;
   $('#statActive').textContent=products.filter(p=>p.active).length;
-  $('#statFeatured').textContent=products.filter(p=>p.featured).length;
+  $('#statPromo').textContent=products.filter(p=>promoIsActiveAdmin(p)).length;
+  $('#statBestSeller').textContent=products.filter(p=>p.best_seller).length;
+  $('#statNew').textContent=products.filter(p=>p.is_new).length;
   $('#statCategories').textContent=categories.length;
+  renderRecentProducts();
+}
+function renderRecentProducts(){
+  const body=$('#recentProductRows'); if(!body)return;
+  const recent=[...products].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0)).slice(0,5);
+  body.innerHTML=recent.length?recent.map(p=>`<tr><td><strong>${esc(p.name)}</strong></td><td>${esc(p.categories?.name||'—')}</td><td><span class="admin-pill ${p.active?'on':'off'}">${p.active?'Aktif':'Nonaktif'}</span></td><td>${rupiah(promoIsActiveAdmin(p)?p.promo_price:p.price)}</td></tr>`).join(''):'<tr><td colspan="4" class="admin-empty">Belum ada produk.</td></tr>';
 }
 function renderProducts(){
   if(!products.length){$('#productRows').innerHTML='<tr><td colspan="6" class="admin-empty">Belum ada produk. Klik <strong>Tambah Produk</strong> untuk membuat produk pertama.</td></tr>';return;}
@@ -317,6 +349,38 @@ function initThemeManager(){
     picker?.addEventListener('input',()=>{ text.value=picker.value.toUpperCase(); setThemePreviewStatus(false); });
   });
 }
+function csvCell(value){
+  const text=String(value??''); return `"${text.replaceAll('"','""')}"`;
+}
+function downloadFile(name, content, type='text/plain;charset=utf-8'){
+  const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+function exportProductsCsv(){
+  const headers=['Nama','Slug','Kategori','Harga Normal','Harga Promo','Min Order','Aktif','Pilihan','Best Seller','Produk Baru','Promo','Mulai Promo','Selesai Promo','Foto Utama','Deskripsi'];
+  const rows=products.map(p=>[p.name,p.slug,p.categories?.name||'',p.price,p.promo_price||'',p.minimum_order,p.active?'Ya':'Tidak',p.featured?'Ya':'Tidak',p.best_seller?'Ya':'Tidak',p.is_new?'Ya':'Tidak',p.promo_enabled?'Ya':'Tidak',p.promo_start||'',p.promo_end||'',p.image_url||'',p.description||'']);
+  const csv='\uFEFF'+[headers,...rows].map(row=>row.map(csvCell).join(',')).join('\r\n');
+  downloadFile(`keyrakha-products-${new Date().toISOString().slice(0,10)}.csv`,csv,'text/csv;charset=utf-8'); toast('CSV produk berhasil dibuat.');
+}
+function downloadBackupJson(){
+  const payload={version:'15.0',exported_at:new Date().toISOString(),categories:categories.map(({id,...c})=>c),products:products.map(p=>{const {id,categories:cat,category_id,created_at,updated_at,...rest}=p;return {...rest,category_slug:cat?.slug||null};}),settings:settings?Object.fromEntries(Object.entries(settings).filter(([k])=>!['id','created_at','updated_at'].includes(k))):null};
+  downloadFile(`keyrakha-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(payload,null,2),'application/json'); toast('Backup JSON berhasil dibuat.');
+}
+async function restoreBackupJson(event){
+  const file=event.target.files?.[0]; event.target.value=''; if(!file)return;
+  const msg=$('#backupMessage'); msg.textContent=''; msg.className='admin-message';
+  try{
+    const backup=JSON.parse(await file.text());
+    if(!Array.isArray(backup.categories)||!Array.isArray(backup.products)) throw new Error('Format backup tidak dikenali.');
+    const ok=await askConfirm({title:'Restore / merge backup?',message:`Akan memproses ${backup.categories.length} kategori dan ${backup.products.length} produk. Data dengan slug sama akan diperbarui.`,confirmText:'Restore Backup'}); if(!ok)return;
+    if(backup.categories.length){ const cats=backup.categories.map(c=>({name:c.name,slug:c.slug})).filter(c=>c.name&&c.slug); const {error}=await db.from('categories').upsert(cats,{onConflict:'slug'}); if(error)throw error; }
+    const {data:liveCats,error:catErr}=await db.from('categories').select('id,slug'); if(catErr)throw catErr;
+    const catMap=Object.fromEntries((liveCats||[]).map(c=>[c.slug,c.id]));
+    if(backup.products.length){ const restored=backup.products.map(p=>{const {category_slug,...rest}=p; return {...rest,category_id:category_slug?catMap[category_slug]||null:null};}).filter(p=>p.name&&p.slug); const {error}=await db.from('products').upsert(restored,{onConflict:'slug'}); if(error)throw error; }
+    if(backup.settings && settings?.id){ const {error}=await db.from('settings').update(backup.settings).eq('id',settings.id); if(error)throw error; }
+    await loadAll(); msg.textContent='Backup berhasil direstore/merge.'; toast('Restore backup selesai.');
+  }catch(err){ msg.textContent='Restore gagal: '+err.message; msg.classList.add('error'); toast(err.message,'error'); }
+}
+
 async function saveSettings(e){
   e.preventDefault(); const btn=$('#saveSettings'),msg=$('#settingsMessage'); setBusy(btn,true,'Menyimpan...','Simpan Pengaturan'); msg.textContent=''; msg.className='admin-message';
   let selectedTheme;

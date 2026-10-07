@@ -76,6 +76,7 @@ async function initDashboard() {
   $('#categorySlug').addEventListener('input',()=>{$('#categorySlug').dataset.auto='off';});
 
   $('#settingsForm').addEventListener('submit',saveSettings);
+  initThemeManager();
   initAdminNavigation();
   await loadAll();
 }
@@ -243,16 +244,91 @@ function renderSettings(){
   $('#settingInstagram').value=s.instagram||'';
   $('#settingTiktok').value=s.tiktok||'';
   $('#settingFacebook').value=s.facebook||'';
+  renderThemeSettings(s);
+}
+
+function validHex(value){ return /^#[0-9a-fA-F]{6}$/.test(String(value||'').trim()); }
+function themeApi(){ return window.KEYRAKHA_THEMES || null; }
+function themeIds(){ return ['Primary','Secondary','Accent','Background','Surface','Text','Muted']; }
+function themeKey(id){ return id.charAt(0).toLowerCase()+id.slice(1); }
+function setThemeInputs(palette){
+  themeIds().forEach(id=>{
+    const key=themeKey(id), value=palette?.[key] || '#000000';
+    const text=$(`#theme${id}`), picker=$(`#theme${id}Picker`);
+    if(text) text.value=value.toUpperCase(); if(picker) picker.value=value;
+  });
+}
+function getCustomTheme(){
+  const out={name:'Custom'};
+  themeIds().forEach(id=>{
+    const key=themeKey(id), value=$(`#theme${id}`)?.value.trim();
+    if(!validHex(value)) throw new Error(`${id} harus berupa warna HEX, contoh #A85F38.`);
+    out[key]=value.toUpperCase();
+  });
+  return out;
+}
+function currentThemePalette(){
+  const api=themeApi(); if(!api) return null;
+  const preset=$('#settingThemePreset')?.value || 'earth-tone';
+  if(preset==='custom') return {preset:'custom',...getCustomTheme()};
+  const base=api.themes[preset] || api.themes['earth-tone'];
+  return {preset,...base};
+}
+function toggleCustomThemeFields(){
+  const custom=$('#settingThemePreset')?.value==='custom';
+  const fields=$('#customThemeFields'); if(fields) fields.hidden=!custom;
+}
+function setThemePreviewStatus(saved=false){
+  const el=$('#themePreviewStatus'); if(!el)return;
+  el.textContent=saved?'Tema tersimpan':'Preview — belum disimpan';
+  el.className=saved?'theme-unsaved theme-preview-status saved':'theme-unsaved theme-preview-status';
+}
+function renderThemePreview(palette,saved=false){
+  const api=themeApi(), preview=$('#themePreview'); if(!api||!preview||!palette)return;
+  api.applyThemeToElement(preview,palette);
+  const sw=$('#themeSwatches');
+  if(sw) sw.innerHTML=['primary','secondary','accent','background','surface','text','muted'].map(k=>`<span class="theme-swatch" title="${k}: ${esc(palette[k])}" style="background:${esc(palette[k])}"></span>`).join('');
+  setThemePreviewStatus(saved);
+}
+function renderThemeSettings(s){
+  const api=themeApi(); if(!api)return;
+  const preset=s.theme_preset || 'earth-tone';
+  $('#settingThemePreset').value=(preset==='custom'||api.themes[preset])?preset:'earth-tone';
+  const resolved=api.resolveTheme(s);
+  setThemeInputs(resolved);
+  toggleCustomThemeFields();
+  renderThemePreview(resolved,true);
+}
+function initThemeManager(){
+  const select=$('#settingThemePreset'); if(!select)return;
+  select.addEventListener('change',()=>{
+    toggleCustomThemeFields();
+    if(select.value==='custom'){
+      const api=themeApi(); const base=api?.resolveTheme(settings||{}); if(base) setThemeInputs(base);
+    }
+    setThemePreviewStatus(false);
+  });
+  $('#previewThemeButton')?.addEventListener('click',()=>{
+    try{ renderThemePreview(currentThemePalette(),false); }catch(err){ toast(err.message,'error'); }
+  });
+  themeIds().forEach(id=>{
+    const text=$(`#theme${id}`), picker=$(`#theme${id}Picker`);
+    text?.addEventListener('input',()=>{ if(validHex(text.value)) picker.value=text.value; setThemePreviewStatus(false); });
+    picker?.addEventListener('input',()=>{ text.value=picker.value.toUpperCase(); setThemePreviewStatus(false); });
+  });
 }
 async function saveSettings(e){
   e.preventDefault(); const btn=$('#saveSettings'),msg=$('#settingsMessage'); setBusy(btn,true,'Menyimpan...','Simpan Pengaturan'); msg.textContent=''; msg.className='admin-message';
+  let selectedTheme;
+  try { selectedTheme=currentThemePalette(); } catch(err) { msg.textContent=err.message; msg.classList.add('error'); toast(err.message,'error'); setBusy(btn,false,'Menyimpan...','Simpan Pengaturan'); return; }
   const payload={
-    business_name:$('#settingBusinessName').value.trim(), hero_title:$('#settingHeroTitle').value.trim(), hero_description:$('#settingHeroDescription').value.trim(), about:$('#settingAbout').value.trim(), whatsapp:$('#settingWhatsapp').value.replace(/\D/g,''), whatsapp_message:$('#settingWhatsappMessage').value.trim(), email:$('#settingEmail').value.trim()||null, address:$('#settingAddress').value.trim(), instagram:$('#settingInstagram').value.trim()||null, tiktok:$('#settingTiktok').value.trim()||null, facebook:$('#settingFacebook').value.trim()||null
+    business_name:$('#settingBusinessName').value.trim(), hero_title:$('#settingHeroTitle').value.trim(), hero_description:$('#settingHeroDescription').value.trim(), about:$('#settingAbout').value.trim(), whatsapp:$('#settingWhatsapp').value.replace(/\D/g,''), whatsapp_message:$('#settingWhatsappMessage').value.trim(), email:$('#settingEmail').value.trim()||null, address:$('#settingAddress').value.trim(), instagram:$('#settingInstagram').value.trim()||null, tiktok:$('#settingTiktok').value.trim()||null, facebook:$('#settingFacebook').value.trim()||null,
+    theme_preset:selectedTheme?.preset||'earth-tone', theme_primary:selectedTheme?.primary||null, theme_secondary:selectedTheme?.secondary||null, theme_accent:selectedTheme?.accent||null, theme_background:selectedTheme?.background||null, theme_surface:selectedTheme?.surface||null, theme_text:selectedTheme?.text||null, theme_muted:selectedTheme?.muted||null
   };
   try{
     const q=settings?.id?db.from('settings').update(payload).eq('id',settings.id):db.from('settings').insert(payload).select().single();
     const {data,error}=await q; if(error) throw error; if(data) settings=data; else settings={...(settings||{}),...payload};
-    msg.textContent='Pengaturan berhasil disimpan. Website publik akan memakai data terbaru.'; toast('Pengaturan website berhasil disimpan.');
+    msg.textContent='Pengaturan berhasil disimpan. Website publik akan memakai data terbaru.'; settings={...(settings||{}),...payload}; renderThemePreview(selectedTheme,true); toast('Pengaturan website berhasil disimpan.');
   }catch(err){msg.textContent='Gagal menyimpan pengaturan: '+err.message;msg.classList.add('error');toast(err.message,'error');}
   finally{setBusy(btn,false,'Menyimpan...','Simpan Pengaturan');}
 }

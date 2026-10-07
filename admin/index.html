@@ -102,6 +102,89 @@
           </div>
         </div>
 
+        <div class="admin-settings-group">
+          <div class="admin-settings-group-title"><span>04</span><div><h3>Theme Manager</h3><p>Pilih tema, preview dulu di panel sebelah kanan, lalu simpan jika sudah cocok. Website publik tidak berubah sebelum tombol Simpan Pengaturan ditekan.</p></div></div>
+          <div class="theme-manager">
+            <div class="theme-controls">
+              <div class="theme-select-row">
+                <label>Tema Website
+                  <select id="settingThemePreset">
+                    <option value="earth-tone">1. Earth Tone</option>
+                    <option value="neutral-tone">2. Neutral Tone</option>
+                    <option value="warm-tone">3. Warm Tone</option>
+                    <option value="cool-tone">4. Cool Tone</option>
+                    <option value="pastel">5. Pastel</option>
+                    <option value="muted-tone">6. Muted Tone</option>
+                    <option value="jewel-tone">7. Jewel Tone</option>
+                    <option value="nude-tone">8. Nude Tone</option>
+                    <option value="autumn-tone">9. Autumn Tone</option>
+                    <option value="spring-tone">10. Spring Tone</option>
+                    <option value="summer-tone">11. Summer Tone</option>
+                    <option value="winter-tone">12. Winter Tone</option>
+                    <option value="coastal">13. Coastal</option>
+                    <option value="tropical">14. Tropical</option>
+                    <option value="vintage">15. Vintage</option>
+                    <option value="retro">16. Retro</option>
+                    <option value="boho">17. Boho</option>
+                    <option value="scandinavian">18. Scandinavian</option>
+                    <option value="dark-moody">19. Dark / Moody</option>
+                    <option value="luxury">20. Luxury</option>
+                    <option value="monochrome">21. Monochrome</option>
+                    <option value="sage">22. Sage</option>
+                    <option value="terracotta">23. Terracotta</option>
+                    <option value="ocean">24. Ocean</option>
+                    <option value="forest">25. Forest</option>
+                    <option value="desert">26. Desert</option>
+                    <option value="rustic">27. Rustic</option>
+                    <option value="romantic">28. Romantic</option>
+                    <option value="minimalist">29. Minimalist</option>
+                    <option value="candy">30. Candy</option>
+                    <option value="neon">31. Neon</option>
+                    <option value="metallic">32. Metallic</option>
+                    <option value="floral">33. Floral</option>
+                    <option value="sunset">34. Sunset</option>
+                    <option value="soft-tone">35. Soft Tone</option>
+                    <option value="dusty-tone">36. Dusty Tone</option>
+                    <option value="creamy-tone">37. Creamy Tone</option>
+                    <option value="natural-tone">38. Natural Tone</option>
+                    <option value="bold-tone">39. Bold Tone</option>
+                    <option value="vibrant-tone">40. Vibrant Tone</option>
+                    <option value="custom">41. Custom</option>
+                  </select>
+                </label>
+                <button type="button" id="previewThemeButton" class="btn btn-ghost">Preview Tema</button>
+              </div>
+
+              <div id="customThemeFields" class="theme-custom-grid" hidden>
+                <label>Primary<div class="theme-color-input"><input id="themePrimaryPicker" type="color"><input id="themePrimary" type="text" maxlength="7" placeholder="#55624A"></div></label>
+                <label>Secondary<div class="theme-color-input"><input id="themeSecondaryPicker" type="color"><input id="themeSecondary" type="text" maxlength="7" placeholder="#7B6B57"></div></label>
+                <label>Accent<div class="theme-color-input"><input id="themeAccentPicker" type="color"><input id="themeAccent" type="text" maxlength="7" placeholder="#A85F38"></div></label>
+                <label>Background<div class="theme-color-input"><input id="themeBackgroundPicker" type="color"><input id="themeBackground" type="text" maxlength="7" placeholder="#FAF7F2"></div></label>
+                <label>Surface<div class="theme-color-input"><input id="themeSurfacePicker" type="color"><input id="themeSurface" type="text" maxlength="7" placeholder="#E8E1D8"></div></label>
+                <label>Text<div class="theme-color-input"><input id="themeTextPicker" type="color"><input id="themeText" type="text" maxlength="7" placeholder="#29201C"></div></label>
+                <label>Muted<div class="theme-color-input"><input id="themeMutedPicker" type="color"><input id="themeMuted" type="text" maxlength="7" placeholder="#766B61"></div></label>
+              </div>
+              <p class="theme-note">Pemilihan dropdown hanya menyiapkan tema. Klik <strong>Preview Tema</strong> untuk melihat simulasi. Tema baru diterapkan ke website publik setelah <strong>Simpan Pengaturan</strong>.</p>
+            </div>
+
+            <div class="theme-preview-shell">
+              <div class="theme-preview-label"><span>Preview</span><span id="themePreviewStatus" class="theme-unsaved">Belum disimpan</span></div>
+              <div id="themePreview" class="theme-preview">
+                <div class="theme-preview-nav">
+                  <div class="theme-preview-brand"><span class="theme-preview-mark">K</span><span>KEYRAKHA</span></div>
+                  <div class="theme-preview-links"><span>Beranda</span><span>Produk</span><span>Tentang</span></div>
+                </div>
+                <div class="theme-preview-hero">
+                  <div class="theme-preview-copy"><small>KEYRAKHA SOUVENIR</small><h4>Hadiah kecil, <em>kesan yang tinggal.</em></h4><p>Preview ini hanya simulasi warna dan belum mengubah website publik.</p><div class="theme-preview-buttons"><span class="primary">Lihat Produk</span><span class="ghost">Hubungi Kami</span></div></div>
+                  <div class="theme-preview-art" aria-hidden="true"></div>
+                </div>
+                <div class="theme-preview-bottom"><span></span><span></span><span></span></div>
+              </div>
+              <div id="themeSwatches" class="theme-swatches"></div>
+            </div>
+          </div>
+        </div>
+
         <p id="settingsMessage" class="admin-message" aria-live="polite"></p>
         <div class="admin-settings-actions"><button type="submit" class="btn btn-primary" id="saveSettings">Simpan Pengaturan</button></div>
       </form>
@@ -178,5 +261,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase-config.js"></script>
+<script src="../js/themes.js"></script>
 <script src="admin.js"></script>
 </body></html>

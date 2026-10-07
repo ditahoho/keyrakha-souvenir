@@ -29,7 +29,15 @@ const DEFAULT_SETTINGS = {
   hero_description: 'Temukan souvenir dan merchandise custom untuk corporate, wedding, seminar, event, dan momen spesial lainnya.',
   whatsapp_message: 'Halo Keyrakha Souvenir, saya ingin bertanya mengenai produk souvenir.',
   facebook: '',
-  tiktok: ''
+  tiktok: '',
+  theme_preset: 'earth-tone',
+  theme_primary: '#55624A',
+  theme_secondary: '#7B6B57',
+  theme_accent: '#A85F38',
+  theme_background: '#FAF7F2',
+  theme_surface: '#E8E1D8',
+  theme_text: '#29201C',
+  theme_muted: '#766B61'
 };
 
 let siteSettings = { ...DEFAULT_SETTINGS };
@@ -74,8 +82,16 @@ function whatsappUrl(message) {
   return `https://wa.me/${number}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
 }
 
+function applySiteTheme(settings) {
+  const api = window.KEYRAKHA_THEMES;
+  if (!api) return;
+  const palette = api.resolveTheme(settings || DEFAULT_SETTINGS);
+  api.applyThemeToElement(document.documentElement, palette);
+}
+
 function applySettings(settings) {
   siteSettings = { ...DEFAULT_SETTINGS, ...(settings || {}) };
+  applySiteTheme(siteSettings);
 
   document.querySelectorAll('[data-wa-link]').forEach(link => {
     const message = link.dataset.waMessage || siteSettings.whatsapp_message || DEFAULT_SETTINGS.whatsapp_message;

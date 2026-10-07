@@ -1,62 +1,18 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    {
-      "source": "/index.html",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/products.html",
-      "destination": "/produk",
-      "permanent": true
-    },
-    {
-      "source": "/about.html",
-      "destination": "/tentang",
-      "permanent": true
-    },
-    {
-      "source": "/contact.html",
-      "destination": "/kontak",
-      "permanent": true
-    },
-    {
-      "source": "/admin/index.html",
-      "destination": "/admin",
-      "permanent": true
-    },
-    {
-      "source": "/admin/login.html",
-      "destination": "/admin/login",
-      "permanent": true
-    }
+    { "source": "/products", "destination": "/produk", "permanent": true },
+    { "source": "/about", "destination": "/tentang", "permanent": true },
+    { "source": "/contact", "destination": "/kontak", "permanent": true },
+    { "source": "/admin/index", "destination": "/admin", "permanent": true }
   ],
   "rewrites": [
-    {
-      "source": "/produk",
-      "destination": "/products.html"
-    },
-    {
-      "source": "/produk/:slug",
-      "destination": "/product.html?slug=:slug"
-    },
-    {
-      "source": "/tentang",
-      "destination": "/about.html"
-    },
-    {
-      "source": "/kontak",
-      "destination": "/contact.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin/index.html"
-    },
-    {
-      "source": "/admin/login",
-      "destination": "/admin/login.html"
-    }
+    { "source": "/produk", "destination": "/products" },
+    { "source": "/produk/:slug", "destination": "/product?slug=:slug" },
+    { "source": "/tentang", "destination": "/about" },
+    { "source": "/kontak", "destination": "/contact" },
+    { "source": "/admin", "destination": "/admin/index" }
   ]
 }

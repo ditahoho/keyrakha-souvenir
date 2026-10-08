@@ -104,9 +104,9 @@
           <div class="admin-settings-group-title"><span>01</span><div><h3>Identitas & Hero</h3><p>Informasi utama yang muncul di halaman depan.</p></div></div>
           <div class="admin-form-grid">
             <label class="full">Nama Bisnis<input id="settingBusinessName" placeholder="Keyrakha Souvenir"></label>
-            <label class="full">Judul Hero<input id="settingHeroTitle" placeholder="Hadiah kecil, kesan yang tinggal."></label>
-            <label class="full">Deskripsi Hero<textarea id="settingHeroDescription" rows="3" placeholder="Deskripsi singkat homepage..."></textarea></label>
-            <label class="full">Tentang Kami<textarea id="settingAbout" rows="5" placeholder="Ceritakan tentang Keyrakha Souvenir..."></textarea></label>
+            <label class="full">Judul Hero<input id="settingHeroTitle" placeholder="Hadiah kecil, kesan yang tinggal."></label><label class="full">Hero Title (EN)<input id="settingHeroTitleEn" placeholder="English translation"></label>
+            <label class="full">Deskripsi Hero<textarea id="settingHeroDescription" rows="3" placeholder="Deskripsi singkat homepage..."></textarea></label><label class="full">Hero Description (EN)<textarea id="settingHeroDescriptionEn" rows="4" placeholder="English translation"></textarea></label>
+            <label class="full">Tentang Kami<textarea id="settingAbout" rows="5" placeholder="Ceritakan tentang Keyrakha Souvenir..."></textarea></label><label class="full">About Us (EN)<textarea id="settingAboutEn" rows="4" placeholder="English translation"></textarea></label>
           </div>
         </div>
 
@@ -236,13 +236,13 @@
     <div class="admin-dialog-head"><div><span class="eyebrow">PRODUK</span><h2 id="formTitle">Tambah Produk</h2></div><button type="button" id="closeDialog" class="icon-button" aria-label="Tutup">×</button></div>
     <input type="hidden" id="productId"><input type="hidden" id="existingImageUrl"><input type="hidden" id="existingGalleryUrls">
     <div class="admin-form-grid">
-      <label class="full">Nama Produk<input id="productName" required placeholder="Contoh: Tumbler Stainless Custom"></label>
+      <label class="full">Nama Produk (ID)<input id="productName" required placeholder="Contoh: Tumbler Stainless Custom"></label>
       <label>Kategori<select id="productCategory" required></select></label>
       <label>Harga Mulai (Rp)<input id="productPrice" type="number" min="0" step="1000" required placeholder="35000"></label>
       <label>Minimum Order<input id="productMinimum" type="number" min="1" value="1" required></label>
       <label>Foto Utama<input id="productImage" type="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG, atau WebP. Maks. 5 MB.</small></label>
       <label class="full">Galeri Foto Tambahan<input id="productGallery" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Maks. 5 foto tambahan. Jika memilih foto baru saat Edit, galeri lama akan diganti.</small></label>
-      <label class="full">Deskripsi<textarea id="productDescription" rows="5" placeholder="Jelaskan bahan, ukuran, kegunaan, dan opsi custom..."></textarea></label>
+      <label class="full">Deskripsi (ID)<textarea id="productDescription" rows="5" placeholder="Jelaskan bahan, ukuran, kegunaan, dan opsi custom..."></textarea></label><label class="full">Product Name (EN)<input id="productNameEn" placeholder="English product name"></label><label class="full">Description (EN)<textarea id="productDescriptionEn" rows="5" placeholder="English product description"></textarea></label>
       <div class="admin-product-flags full">
         <span class="admin-field-title">Status & Label Produk</span>
         <div class="admin-flag-grid">
@@ -276,7 +276,7 @@
     <div class="admin-dialog-head"><div><span class="eyebrow">KATEGORI</span><h2 id="categoryFormTitle">Tambah Kategori</h2></div><button type="button" id="closeCategoryDialog" class="icon-button" aria-label="Tutup">×</button></div>
     <input type="hidden" id="categoryId">
     <div class="admin-form-grid one-column">
-      <label>Nama Kategori<input id="categoryName" required placeholder="Contoh: Tumbler"></label>
+      <label>Nama Kategori (ID)<input id="categoryName" required placeholder="Contoh: Tumbler"></label><label>Category Name (EN)<input id="categoryNameEn" placeholder="e.g. Tumbler"></label>
       <label>Slug<input id="categorySlug" required placeholder="tumbler"><small>Otomatis dibuat dari nama, tetapi dapat diedit.</small></label>
     </div>
     <p id="categoryMessage" class="admin-message" aria-live="polite"></p>

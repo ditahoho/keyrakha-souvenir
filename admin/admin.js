@@ -209,7 +209,7 @@ function renderCategoryRows(){
 
 function openProductForm(p=null){
   $('#productForm').reset(); $('#productId').value=p?.id||''; $('#existingImageUrl').value=p?.image_url||''; $('#existingGalleryUrls').value=JSON.stringify(Array.isArray(p?.gallery_urls)?p.gallery_urls:[]); $('#formTitle').textContent=p?'Edit Produk':'Tambah Produk';
-  $('#productName').value=p?.name||''; $('#productCategory').value=p?.category_id||''; $('#productPrice').value=p?.price??''; $('#productMinimum').value=p?.minimum_order||1; $('#productDescription').value=p?.description||''; $('#productActive').checked=p?p.active:true; $('#productFeatured').checked=Boolean(p?.featured); $('#productBestSeller').checked=Boolean(p?.best_seller); $('#productNew').checked=Boolean(p?.is_new); $('#productPromo').checked=Boolean(p?.promo_enabled); $('#productPromoPrice').value=p?.promo_price??''; $('#productPromoStart').value=p?.promo_start||''; $('#productPromoEnd').value=p?.promo_end||''; togglePromoFields(); $('#formMessage').textContent=''; $('#formMessage').className='admin-message';
+  $('#productName').value=p?.name||''; $('#productCategory').value=p?.category_id||''; $('#productPrice').value=p?.price??''; $('#productMinimum').value=p?.minimum_order||1; $('#productDescription').value=p?.description||''; $('#productNameEn').value=p?.name_en||''; $('#productDescriptionEn').value=p?.description_en||''; $('#productActive').checked=p?p.active:true; $('#productFeatured').checked=Boolean(p?.featured); $('#productBestSeller').checked=Boolean(p?.best_seller); $('#productNew').checked=Boolean(p?.is_new); $('#productPromo').checked=Boolean(p?.promo_enabled); $('#productPromoPrice').value=p?.promo_price??''; $('#productPromoStart').value=p?.promo_start||''; $('#productPromoEnd').value=p?.promo_end||''; togglePromoFields(); $('#formMessage').textContent=''; $('#formMessage').className='admin-message';
   if(p?.image_url){$('#imagePreview').src=p.image_url;$('#imagePreviewWrap').hidden=false;}else{$('#imagePreviewWrap').hidden=true;$('#imagePreview').removeAttribute('src');}
   renderGalleryPreview(Array.isArray(p?.gallery_urls)?p.gallery_urls:[]);
   $('#productDialog').showModal();
@@ -262,7 +262,7 @@ async function saveProduct(e){
     if(promoEnabled && promoStart && promoEnd && promoEnd<promoStart) throw new Error('Tanggal berakhir promo tidak boleh lebih awal dari tanggal mulai.');
     const imageUrl=await uploadImage($('#productImage').files[0],name);
     const galleryUrls=await uploadGallery([...$('#productGallery').files],name);
-    const payload={name,slug:slugify(name),category_id:Number($('#productCategory').value),price:normalPrice,minimum_order:Number($('#productMinimum').value||1),description:$('#productDescription').value.trim(),image_url:imageUrl,gallery_urls:galleryUrls,active:$('#productActive').checked,featured:$('#productFeatured').checked,best_seller:$('#productBestSeller').checked,is_new:$('#productNew').checked,promo_enabled:promoEnabled,promo_price:promoEnabled?promoPrice:null,promo_start:promoEnabled?promoStart:null,promo_end:promoEnabled?promoEnd:null};
+    const payload={name,slug:slugify(name),category_id:Number($('#productCategory').value),price:normalPrice,minimum_order:Number($('#productMinimum').value||1),description:$('#productDescription').value.trim(),name_en:$('#productNameEn').value.trim(),description_en:$('#productDescriptionEn').value.trim(),image_url:imageUrl,gallery_urls:galleryUrls,active:$('#productActive').checked,featured:$('#productFeatured').checked,best_seller:$('#productBestSeller').checked,is_new:$('#productNew').checked,promo_enabled:promoEnabled,promo_price:promoEnabled?promoPrice:null,promo_start:promoEnabled?promoStart:null,promo_end:promoEnabled?promoEnd:null};
     const id=$('#productId').value; const q=id?db.from('products').update(payload).eq('id',id):db.from('products').insert(payload); const {error}=await q; if(error) throw error;
     closeProductForm(); await loadAll(); toast(id?'Produk berhasil diperbarui.':'Produk berhasil ditambahkan.');
   }catch(err){msg.textContent='Gagal menyimpan: '+err.message;msg.classList.add('error');toast(err.message,'error');}
@@ -275,14 +275,14 @@ async function deleteProduct(p){
 
 function openCategoryForm(c=null){
   $('#categoryForm').reset(); $('#categoryId').value=c?.id||''; $('#categoryFormTitle').textContent=c?'Edit Kategori':'Tambah Kategori';
-  $('#categoryName').value=c?.name||''; $('#categorySlug').value=c?.slug||''; $('#categorySlug').dataset.auto=c?'off':'on';
+  $('#categoryName').value=c?.name||''; $('#categoryNameEn').value=c?.name_en||''; $('#categorySlug').value=c?.slug||''; $('#categorySlug').dataset.auto=c?'off':'on';
   $('#categoryMessage').textContent=''; $('#categoryMessage').className='admin-message'; $('#categoryDialog').showModal();
 }
 function closeCategoryForm(){ $('#categoryDialog').close(); }
 async function saveCategory(e){
   e.preventDefault(); const btn=$('#saveCategory'),msg=$('#categoryMessage'); setBusy(btn,true,'Menyimpan...','Simpan Kategori'); msg.textContent=''; msg.className='admin-message';
   try{
-    const payload={name:$('#categoryName').value.trim(),slug:slugify($('#categorySlug').value||$('#categoryName').value)}; const id=$('#categoryId').value;
+    const payload={name:$('#categoryName').value.trim(),name_en:$('#categoryNameEn').value.trim(),slug:slugify($('#categorySlug').value||$('#categoryName').value)}; const id=$('#categoryId').value;
     const q=id?db.from('categories').update(payload).eq('id',id):db.from('categories').insert(payload); const {error}=await q; if(error) throw error;
     closeCategoryForm(); await loadAll(); toast(id?'Kategori berhasil diperbarui.':'Kategori berhasil ditambahkan.');
   }catch(err){msg.textContent='Gagal menyimpan: '+err.message;msg.classList.add('error');}
@@ -300,7 +300,7 @@ function renderSettings(){
   $('#settingBusinessName').value=s.business_name||'Keyrakha Souvenir';
   $('#settingHeroTitle').value=s.hero_title||'';
   $('#settingHeroDescription').value=s.hero_description||'';
-  $('#settingAbout').value=s.about||'';
+  $('#settingAbout').value=s.about||''; $('#settingHeroTitleEn').value=s.hero_title_en||''; $('#settingHeroDescriptionEn').value=s.hero_description_en||''; $('#settingAboutEn').value=s.about_en||'';
   $('#settingWhatsapp').value=s.whatsapp||'';
   $('#settingWhatsappMessage').value=s.whatsapp_message||'';
   $('#settingEmail').value=s.email||'';
@@ -462,7 +462,7 @@ async function saveSettings(e){
   let selectedTheme;
   try { selectedTheme=currentThemePalette(); } catch(err) { msg.textContent=err.message; msg.classList.add('error'); toast(err.message,'error'); setBusy(btn,false,'Menyimpan...','Simpan Pengaturan'); return; }
   const payload={
-    business_name:$('#settingBusinessName').value.trim(), hero_title:$('#settingHeroTitle').value.trim(), hero_description:$('#settingHeroDescription').value.trim(), about:$('#settingAbout').value.trim(), whatsapp:$('#settingWhatsapp').value.replace(/\D/g,''), whatsapp_message:$('#settingWhatsappMessage').value.trim(), email:$('#settingEmail').value.trim()||null, address:$('#settingAddress').value.trim(), instagram:$('#settingInstagram').value.trim()||null, tiktok:$('#settingTiktok').value.trim()||null, facebook:$('#settingFacebook').value.trim()||null,
+    business_name:$('#settingBusinessName').value.trim(), hero_title:$('#settingHeroTitle').value.trim(), hero_description:$('#settingHeroDescription').value.trim(), about:$('#settingAbout').value.trim(), hero_title_en:$('#settingHeroTitleEn').value.trim(),hero_description_en:$('#settingHeroDescriptionEn').value.trim(),about_en:$('#settingAboutEn').value.trim(), whatsapp:$('#settingWhatsapp').value.replace(/\D/g,''), whatsapp_message:$('#settingWhatsappMessage').value.trim(), email:$('#settingEmail').value.trim()||null, address:$('#settingAddress').value.trim(), instagram:$('#settingInstagram').value.trim()||null, tiktok:$('#settingTiktok').value.trim()||null, facebook:$('#settingFacebook').value.trim()||null,
     theme_preset:selectedTheme?.preset||'earth-tone', theme_primary:selectedTheme?.primary||null, theme_secondary:selectedTheme?.secondary||null, theme_accent:selectedTheme?.accent||null, theme_background:selectedTheme?.background||null, theme_surface:selectedTheme?.surface||null, theme_text:selectedTheme?.text||null, theme_muted:selectedTheme?.muted||null
   };
   try{

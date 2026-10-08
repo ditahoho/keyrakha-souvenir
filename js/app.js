@@ -1,3 +1,4 @@
+function bilingualValue(record,key){const lang=(()=>{try{return localStorage.getItem('keyrakha-language')}catch(e){return 'id'}})();return (lang==='en' && record[key+'_en']) || record[key] || '';}
 const header = document.querySelector('.site-header');
 const menuToggle = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.main-nav');
@@ -111,15 +112,15 @@ function applySettings(settings) {
   });
 
   document.querySelectorAll('[data-setting-about]').forEach(el => {
-    if (siteSettings.about) el.textContent = siteSettings.about;
+    if (siteSettings.about) el.textContent = bilingualValue(siteSettings,'about');
   });
 
   document.querySelectorAll('[data-setting-hero-title]').forEach(el => {
-    if (siteSettings.hero_title) el.textContent = siteSettings.hero_title;
+    if (siteSettings.hero_title) el.textContent = bilingualValue(siteSettings,'hero_title');
   });
 
   document.querySelectorAll('[data-setting-hero-description]').forEach(el => {
-    if (siteSettings.hero_description) el.textContent = siteSettings.hero_description;
+    if (siteSettings.hero_description) el.textContent = bilingualValue(siteSettings,'hero_description');
   });
 
   document.querySelectorAll('[data-setting-map]').forEach(el => {
@@ -225,6 +226,7 @@ function productBadges(product) {
 }
 
 function productCard(product) {
+  product={...product,name:bilingualValue(product,'name'),description:bilingualValue(product,'description')};
   const meta = productMeta(product);
   const gallery = Array.isArray(product.gallery_urls) ? product.gallery_urls.filter(Boolean) : [];
   const photos = [product.image_url, ...gallery].filter(Boolean);
@@ -471,6 +473,7 @@ async function loadProductDetail() {
     if (el) el.textContent = value;
   };
 
+  product={...product,name:bilingualValue(product,'name'),description:bilingualValue(product,'description')};
   setText('#breadcrumbProduct', product.name);
   setText('#detailCategory', meta.label.toUpperCase());
   setText('#detailName', product.name);

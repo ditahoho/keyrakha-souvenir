@@ -4,7 +4,10 @@
     'Beranda':'Home','Produk':'Products','Tentang Kami':'About Us','Kontak':'Contact','Konsultasi':'Consultation',
     'Lihat Semua Produk':'View All Products','Lihat Semua':'View All','Produk Pilihan':'Featured Products',
     'Lihat Produk':'Browse Products','Hubungi Kami':'Contact Us','Katalog Produk':'Product Catalog',
-    'Cari Produk':'Search Products','Cari produk...':'Search products...',
+    'Cari Produk':'Search Products',
+    'Cari produk, misalnya tumbler atau gift set...':'Search products, e.g. tumblers or gift sets...',
+    'Souvenir Berkesan untuk Setiap Momen':'Memorable Souvenirs for Every Occasion',
+    'Temukan berbagai pilihan souvenir dan merchandise custom untuk kebutuhan personal, perusahaan, seminar, wedding, dan berbagai acara lainnya.':'Discover custom souvenirs and merchandise for personal events, businesses, seminars, weddings, and more.','Cari produk...':'Search products...',
     'Kategori':'Category','Semua Kategori':'All Categories','Semua Produk':'All Products',
     'Produk Terbaru':'Latest Products','Produk Unggulan':'Featured Products','Produk Baru':'New Arrivals',
     'Best Seller':'Best Seller','Baru':'New','Pilihan':'Featured','Promo':'Sale',
@@ -162,7 +165,7 @@
     try{localStorage.setItem('keyrakha-language',lang)}catch(e){}
     document.querySelector('.language-flag').textContent=lang==='en'?'🇬🇧':'🇮🇩';
     document.querySelector('.language-code').textContent=lang.toUpperCase();
-    translate();close();
+    translate();close(); window.location.reload();
   }));
   document.addEventListener('click',e=>{if(!e.target.closest('.language-menu'))close()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});

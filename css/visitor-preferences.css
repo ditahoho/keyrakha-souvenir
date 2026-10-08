@@ -13,3 +13,18 @@ html[data-appearance="dark"] .product-card,html[data-appearance="dark"] .data-no
 @media(max-width:1050px){.nav-wrap{gap:12px}.main-nav{gap:15px}.visitor-preferences{gap:5px}.language-toggle{padding:0 9px}}
 @media(max-width:760px){.visitor-preferences{margin-left:auto}.language-toggle,.appearance-toggle{min-height:38px}.appearance-toggle{width:38px}.language-toggle{padding:0 8px}.nav-wrap{gap:8px}.nav-cta{display:none}}
 @media(max-width:360px){.language-toggle{font-size:12px}.brand-copy strong{font-size:11px}.brand-copy small{font-size:8px}}
+
+/* V19: dark palette must override inline Theme Manager palette on :root. Public pages only. */
+html[data-appearance="dark"]{--paper:#151a18!important;--paper-2:#242d29!important;--ink:#f5f3ed!important;--muted:#c4c9c2!important;--white:#fefcf6!important;--line:rgba(242,245,238,.20)!important;--shadow:0 22px 70px rgba(0,0,0,.45)!important}
+html[data-appearance="dark"] body,html[data-appearance="dark"] main,html[data-appearance="dark"] .hero,html[data-appearance="dark"] .products-section,html[data-appearance="dark"] .story-section,html[data-appearance="dark"] .category-section{background:#151a18!important;color:var(--ink)!important}
+html[data-appearance="dark"] .category-section,html[data-appearance="dark"] .product-detail-section,html[data-appearance="dark"] .catalog-section{background:#202723!important}
+html[data-appearance="dark"] .site-header,html[data-appearance="dark"] .floating-card,html[data-appearance="dark"] .catalog-sidebar,html[data-appearance="dark"] .filter-panel,html[data-appearance="dark"] .product-detail-info{background:#242d29!important;color:#f5f3ed!important;border-color:var(--line)!important}
+html[data-appearance="dark"] .btn-ghost,html[data-appearance="dark"] .category-card,html[data-appearance="dark"] .product-card,html[data-appearance="dark"] .language-toggle,html[data-appearance="dark"] .appearance-toggle{background:#242d29!important;color:#f5f3ed!important;border-color:var(--line)!important}
+html[data-appearance="dark"] .hero-card-main{background:#41443c!important}
+html[data-appearance="dark"] .story-box-main{background:#57483f!important}
+html[data-appearance="dark"] .story-box-small{background:#34483b!important}
+html[data-appearance="dark"] .btn-primary{color:#fff!important}
+html[data-appearance="dark"] .site-footer{background:#101613!important}
+html[data-appearance="dark"] .process-section{background:#2a3a2c!important}
+html[data-appearance="dark"] .cta-card{background:#303c33!important;color:#fff!important}
+html[data-appearance="dark"] .product-image,html[data-appearance="dark"] .detail-visual{color:#27251f}

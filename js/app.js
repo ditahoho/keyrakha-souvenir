@@ -414,22 +414,25 @@ async function loadHomepageProducts() {
   const grid = document.querySelector('#homepageProductGrid');
   if (!grid) return;
   const client = getSupabaseClient();
-  if (!client) return;
-
-  const { data, error } = await client
-    .from('products')
-    .select('id,name,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug)')
-    .eq('active', true)
-    .eq('featured', true)
-    .order('created_at', { ascending: false })
-    .limit(4);
-
-  if (error) {
-    console.error('Gagal memuat produk pilihan:', error.message);
+  if (!client) {
+    grid.innerHTML = '<p class="data-notice">Katalog belum terhubung. Silakan coba lagi nanti.</p>';
     return;
   }
-
-  if (data?.length) { grid.innerHTML = data.map(productCard).join(''); initProductCardHoverGalleries(grid); }
+  // Load published products, prioritize admin-marked featured, then newest.
+  const { data, error } = await client.from('products')
+    .select('id,name,slug,price,minimum_order,image_url,gallery_urls,featured,best_seller,is_new,promo_enabled,promo_price,promo_start,promo_end,category_id,categories(name,slug),created_at')
+    .eq('active', true).order('created_at', { ascending: false }).limit(100);
+  if (error) {
+    console.error('Gagal memuat produk pilihan:', error.message);
+    grid.innerHTML = '<p class="data-notice">Produk belum dapat dimuat. Silakan coba lagi.</p>';
+    return;
+  }
+  const featured = (data || []).filter(product => product.featured);
+  const other = (data || []).filter(product => !product.featured);
+  const chosen = [...featured, ...other].slice(0, 4);
+  grid.innerHTML = chosen.length ? chosen.map(productCard).join('') : '<p class="data-notice">Produk akan segera hadir.</p>';
+  initProductCardHoverGalleries(grid);
+  document.dispatchEvent(new CustomEvent('keyrakha:products-rendered'));
 }
 
 async function loadProductDetail() {
